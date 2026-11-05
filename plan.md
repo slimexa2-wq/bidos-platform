@@ -1,24 +1,26 @@
-1. **Create the Labor Bid Price Calculator Audit Trace module:**
-   - Path: `ultra_modules/labor_bid_price_calculator_audit_trace.py`
-   - Implement the `LaborBidPriceCalculatorAuditTrace` class.
-   - Core functions must include backward calculation of gross profit (毛利倒推), considering compliance minimums for social security and housing provident fund (社保公积金合规底线), disability employment security fund (残保金), and taxes (税费).
-   - Backend functions must support silent logging/audit tracing (后台全链路可追溯审计日志) of all calculation steps, deduplication, and data repair.
-   - Enforce zero-configuration fault tolerance, automatically assign reasonable defaults for missing parameters, and silently clean dirty data.
-
-2. **Create unit tests for the module:**
-   - Path: `tests/ultra_modules/test_labor_bid_price_calculator_audit_trace.py`
-   - Use the standard `unittest` library.
-   - Implement at least 5 test cases covering:
-     - Normal behavior (正常).
-     - Dirty data self-healing (脏数据自愈).
-     - Missing parameter fallbacks (缺参默认兜底).
-     - Extreme boundary conditions (极端边界).
-     - Audit trace verification.
-   - Tests must aim for 100% branch coverage.
-
-3. **Complete pre-commit steps:**
-   - Execute tests locally using `PYTHONPATH=. python3 -m unittest tests/ultra_modules/test_labor_bid_price_calculator_audit_trace.py`.
-   - Complete pre-commit steps to ensure proper testing, verification, review, and reflection are done.
-
-4. **Submit and Create Pull Request:**
-   - Push the branch and create a PR directly without waiting for human confirmation.
+1. **Create the integration bridge module:**
+   - I will use `write_file` to create `ultra_modules/technical_proposal_outline_gen_integration_bridge.py`.
+   - Implement a function `bridge_generate_proposal_outline` that accepts arbitrary or legacy payloads (e.g. from older system versions).
+   - It will import `generate_proposal_outline` from `technical_proposal_outline_gen_core_engine`.
+   - The integration bridge will dynamically map the input payload (which might be deeply nested, JSON strings, or contain differently structured arrays) to the standard list of dictionaries expected by the core engine.
+   - Missing fields will be filled with sensible defaults. Dirty data like text strings instead of numbers, invalid values, etc., will be auto-healed before passing to the core engine.
+2. **Verify the module:**
+   - Use `read_file` to ensure `ultra_modules/technical_proposal_outline_gen_integration_bridge.py` is correctly created and contains the expected code.
+3. **Create the unit tests:**
+   - I will use `write_file` to create `tests/ultra_modules/test_technical_proposal_outline_gen_integration_bridge.py`.
+   - I will create a test class inheriting from `unittest.TestCase`.
+   - Test cases will cover:
+     - `test_normal_payload`: Valid data standard schema.
+     - `test_old_schema_mapping`: Silently mapping alternative or deeply nested legacy schema fields to the new schema without configurations.
+     - `test_dirty_data_self_healing`: Handling invalid datatypes (JSON strings instead of objects, unparseable strings, missing required fields).
+     - `test_missing_parameter_default`: Empty or null input where defaults must be applied.
+     - `test_extreme_boundary_conditions`: Passing unexpected types like integers or booleans instead of lists, extremely large values, etc.
+   - Ensure 100% branch coverage inside the integration bridge module.
+4. **Verify the tests:**
+   - Use `read_file` to ensure `tests/ultra_modules/test_technical_proposal_outline_gen_integration_bridge.py` is correctly created.
+5. **Run tests & coverage:**
+   - Use `run_in_bash_session` to execute `PYTHONPATH=. coverage run --branch -m unittest tests/ultra_modules/test_technical_proposal_outline_gen_integration_bridge.py`.
+   - Run `coverage report -m ultra_modules/technical_proposal_outline_gen_integration_bridge.py` to ensure 100% branch coverage.
+6. **Complete pre-commit steps to ensure proper testing, verification, review, and reflection are done.**
+7. **Commit and push code:**
+   - Use `run_in_bash_session` to run `git checkout -b feature/integration-bridge`, `git add .`, `git commit -m 'feat: Add technical proposal outline gen integration bridge'`, `git push -u origin HEAD`, and `gh pr create --title "feat: Add technical proposal outline gen integration bridge" --body "Implementation of integration bridge and tests for technical proposal outline generation."`.
