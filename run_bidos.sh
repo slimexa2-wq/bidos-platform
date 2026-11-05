@@ -118,6 +118,7 @@ start_one() {
   else
     echo "  $name 启动失败，日志末尾："
     tail -5 "$log" 2>/dev/null | sed 's/^/      /'
+    echo "  [诊断建议] 可能是端口 $port 被占用或配置有误。请执行 \`tail -n 50 $log\` 查看完整日志。"
     rm -f "$pidf"
     kill_tree "$pid" KILL 2>/dev/null
     return 1
