@@ -37,7 +37,7 @@ die()  { echo "  ${R}✗ $*${N}"; exit 1; }
 LAN_HOST="0.0.0.0"
 WEB_PORT="5173"
 API_PORT="8000"
-DB_NAME="bidos"; DB_USER="bidos"; DB_PASS="bidos_dev_only"; DB_PORT="55432"
+DB_NAME="${BIDOS_DB_NAME:-bidos}"; DB_USER="${BIDOS_DB_USER:-bidos}"; DB_PASS="${BIDOS_DB_PASS:-bidos_dev_only}"; DB_PORT="${BIDOS_DB_PORT:-55432}"
 VENV="$ROOT/.venv311"
 LAN_IP=""
 
@@ -85,6 +85,7 @@ for cand in python3.11 python3.12 python3; do
 done
 [ -n "$PY" ] || die "没找到 Python 3.11 或 3.12。
 安装：brew install python@3.11
+[诊断建议] 请检查是否已安装 Python 3.11/3.12 且将其加入 PATH。
 装完后重新运行本脚本。"
 ok "Python：$PY ($("$PY" -V 2>&1 | awk '{print $2}'))"
 
@@ -98,6 +99,7 @@ for cand in node /opt/homebrew/bin/node /usr/local/bin/node; do
 done
 [ -n "$NODE" ] || die "没找到 Node.js 18 或更高版本。
 安装：brew install node
+[诊断建议] 请检查是否已安装 Node.js 18+ 且将其加入 PATH。
 装完后重新运行本脚本。"
 ok "Node：$NODE (v$("$NODE" -v))"
 
@@ -110,6 +112,7 @@ for cand in docker /usr/local/bin/docker /opt/homebrew/bin/docker; do
 done
 [ -n "$DOCKER" ] || die "Docker 没在运行。
 安装：brew install --cask docker
+[诊断建议] 请确认 Docker Desktop (或 OrbStack) 客户端已打开且状态为 Running。
 装完启动 Docker Desktop（或 OrbStack）后重新运行本脚本。"
 ok "Docker：$DOCKER"
 
@@ -147,26 +150,28 @@ else
   ok "已创建虚拟环境"
 fi
 "$VENV/bin/python" -m pip install --quiet --upgrade pip 2>/dev/null || true
-if "$VENV/bin/python" -c "import fastapi, psycopg, sqlalchemy, openpyxl" 2>/dev/null; then
+[ -f requirements.lock.txt ] || die "缺少 requirements.lock.txt（依赖清单），请重新解压完整交付包"
+if cmp -s requirements.lock.txt "$VENV/.req.lock" 2>/dev/null; then
   ok "依赖已就绪"
 else
-  [ -f requirements.lock.txt ] || die "缺少 requirements.lock.txt（依赖清单），请重新解压完整交付包"
   ok "安装依赖（首次约 1-3 分钟）…"
   "$VENV/bin/python" -m pip install --quiet -r requirements.lock.txt \
     || die "依赖安装失败。常见原因：网络不通。可换国内镜像重试：
     $VENV/bin/python -m pip install -r requirements.lock.txt -i https://pypi.tuna.tsinghua.edu.cn/simple"
+  cp requirements.lock.txt "$VENV/.req.lock"
   ok "依赖安装完成"
 fi
 
 # ------------------------------------------------------------------ 3. 前端依赖
 step "3/6 准备前端依赖"
-if [ -d "$ROOT/apps/web/node_modules/vite" ]; then
+if cmp -s "$ROOT/apps/web/package-lock.json" "$ROOT/apps/web/.package-lock.installed" 2>/dev/null && [ -d "$ROOT/apps/web/node_modules/vite" ]; then
   ok "前端依赖已就绪"
 else
   ok "安装前端依赖（首次约 1-3 分钟）…"
   ( cd "$ROOT/apps/web" && npm install --no-audit --no-fund ) \
     || die "前端依赖安装失败。可换镜像重试：
     cd apps/web && npm install --registry=https://registry.npmmirror.com"
+  cp "$ROOT/apps/web/package-lock.json" "$ROOT/apps/web/.package-lock.installed" 2>/dev/null || true
   ok "前端依赖安装完成"
 fi
 
@@ -190,7 +195,8 @@ for i in $(seq 1 40); do
   sleep 1
 done
 docker exec bidos-pg pg_isready -U "$DB_USER" -d "$DB_NAME" >/dev/null 2>&1 \
-  || die "数据库 40 秒内没就绪。查看日志：docker logs bidos-pg"
+  || die "数据库 40 秒内没就绪。查看日志：docker logs bidos-pg
+[诊断建议] 可能端口 $DB_PORT 被占用，或容器启动失败。请执行 \`docker logs bidos-pg\` 排查。"
 ok "数据库就绪"
 
 # 数据恢复：只在projects 表为空时恢复，避免覆盖已有数据
@@ -233,6 +239,7 @@ for f in "$ROOT"/infra/launchd/*.plist; do
       -e "s|__PYTHON__|$VENV/bin/python|g" \
       -e "s|__NODE__|$NODE|g" \
       -e "s|__DATABASE_URL__|$DB_URL|g" \
+      -e "s|__ORGANIZATION_ID__|${BIDOS_ORGANIZATION_ID:-org_xiangneng}|g" \
       -e "s|__WORKBOOK_DIR__|$WORKBOOK_DIR|g" \
       -e "s|__LAN_HOST__|$LAN_HOST|g" \
       -e "s|__WEB_PORT__|$WEB_PORT|g" \
