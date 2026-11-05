@@ -12,6 +12,8 @@ import { AlertsPage } from './pages/AlertsPage'
 import { BidBondsPage } from './pages/BidBondsPage'
 import { OpsPage } from './pages/OpsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { DecisionCard } from './pages/decision/DecisionCard'
+
 
 /**
  * 路由表。
@@ -32,6 +34,8 @@ export default function App() {
             <Route path="registration" element={<RegistrationPage />} />
             <Route path="evaluation" element={<EvaluationPage />} />
             <Route path="document" element={<DocumentPage />} />
+            <Route path="decision-brief" element={<DecisionCard />} />
+
             <Route path="results" element={<ResultsPage />} />
             <Route path="bid-bonds" element={<BidBondsPage />} />
             <Route path="competitors" element={<CompetitorsPage />} />

@@ -36,6 +36,8 @@ from app.container import (
 )
 from app.core.config import settings
 from app.domain import FeedbackInput, HumanDecisionInput
+from app.services.decision_brief import DecisionBriefService
+
 
 # 纯文本整标检查的字段抽取必须与规则引擎**用同一套正则**：否则会出现
 # 「端点解析出了值、规则引擎却看不见」的假象（正是本轮要修的缺陷）。
@@ -1799,3 +1801,10 @@ def start_display_snapshots():
         scheduler._scheduler.add_job(lambda: scheduler.run_managed_job('display_hourly_snapshot', _display_snapshots.refresh),
                                      'cron', minute=0, timezone='Asia/Shanghai', id='display_hourly_snapshot',
                                      replace_existing=True, max_instances=1, coalesce=True, misfire_grace_time=3600)
+
+@app.post("/api/documents/decision-brief")
+def generate_decision_brief(document: dict[str, Any]):
+    """一页式极简投标决策卡"""
+    text = document.get("content", "")
+    service = DecisionBriefService()
+    return service.generate_brief(text)
