@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.domain import EventType
 import os
 import sys
 
@@ -264,6 +265,48 @@ def ai_clear(payload: dict[str, Any] | None = None) -> dict:
 # ---------------------------------------------------------------------------
 # 业务读取：全部走 Repository，mock 与真实数据形状完全一致，前端零改动
 # ---------------------------------------------------------------------------
+
+
+
+@app.get("/api/dashboard/expiring-and-bonds")
+def expiring_and_bonds_dashboard():
+    """90天项目到期/保证金退回极简看板 (Minimalist Dashboard).
+
+    Aggregates Project Expiry and Bid Bond Return events for a unified,
+    zero-friction view to quickly follow up on critical financial and expiry timelines.
+    """
+    if event_store is None:
+        raise HTTPException(status_code=503, detail="事件引擎未挂载")
+
+    # Fetch PROJECT_EXPIRING, DEPOSIT_REFUND_DUE, DEPOSIT_OVERDUE events
+    open_events = event_store.list_open(
+        type_prefixes=(
+            EventType.PROJECT_EXPIRING,
+            EventType.DEPOSIT_REFUND_DUE,
+            EventType.DEPOSIT_OVERDUE
+        )
+    )
+
+    expiring_projects = []
+    bid_bonds = []
+
+    for event in open_events:
+        alert_data = _event_to_alert(event)
+        if event.type == EventType.PROJECT_EXPIRING:
+            expiring_projects.append(alert_data)
+        else:
+            bid_bonds.append(alert_data)
+
+    # Sort them by severity / due date
+    expiring_projects.sort(key=lambda x: (x.get('severityRank', 99), x.get('relativeDate') or ''))
+    bid_bonds.sort(key=lambda x: (x.get('severityRank', 99), x.get('relativeDate') or ''))
+
+    return {
+        "expiringProjects": expiring_projects,
+        "bidBonds": bid_bonds,
+        "totalCount": len(expiring_projects) + len(bid_bonds),
+        "note": "90天项目到期/保证金退回极简聚合视图"
+    }
 
 
 @app.get("/api/dashboard")

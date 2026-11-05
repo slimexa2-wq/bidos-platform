@@ -44,6 +44,7 @@ from app.connectors.degrade import (
     build_chain,
 )
 from app.domain import Event, EventType, IngestedItem, SourceHealth
+from app.services.diff_engine import compare_announcement_diff
 
 __all__ = [
     "FetchError",
@@ -966,13 +967,41 @@ class OfficialHttpConnector(SourceConnector):
                 )
             elif previous != digest:
                 self.last_changed_items += 1
+
+                # Fetch old text and compare
+                old_text = None
+                if hasattr(self._hash_store, 'get_text'):
+                    old_text = self._hash_store.get_text(self.id, item.external_id)
+
+                diff_result = compare_announcement_diff(old_text, item.text)
+
+                severity = "warning"
+                detail_msg = f"来源 {self.name} 的公告内容 hash 变化（可能是更正公告）。"
+
+                if diff_result:
+                    changes = []
+                    if 'deadline' in diff_result:
+                        changes.append(diff_result['deadline'])
+                        severity = "critical"
+                    if 'budget' in diff_result:
+                        changes.append(diff_result['budget'])
+                        severity = "critical"
+                    if 'qualifications' in diff_result:
+                        changes.append(diff_result['qualifications'])
+                        severity = "critical"
+
+                    if changes:
+                        detail_msg += f" 发现核心条款变更：{'; '.join(changes)}。"
+
+                detail_msg += link_line
+
                 self._emit(
                     Event(
                         id=f"evt_changed_{uuid4().hex}",
                         type=EventType.ANNOUNCEMENT_CHANGED,
                         title=f"{item.title} 内容变更",
-                        detail=f"来源 {self.name} 的公告内容 hash 变化（可能是更正公告）。{link_line}",
-                        severity="warning",
+                        detail=detail_msg,
+                        severity=severity,
                         occurred_at=now,
                         metadata={
                             "source_id": self.id,
@@ -980,6 +1009,7 @@ class OfficialHttpConnector(SourceConnector):
                             "url": item.url,
                             "old_hash": previous,
                             "new_hash": digest,
+                            "diff": diff_result
                         },
                     )
                 )

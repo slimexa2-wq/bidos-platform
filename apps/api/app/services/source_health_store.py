@@ -235,6 +235,29 @@ class ContentHashStore:
     def has(self, source_id: str, external_id: str) -> bool:
         return (source_id, external_id) in self._hashes
 
+    def get_text(self, source_id: str, external_id: str) -> str | None:
+        """Retrieve the original text of the announcement from the database."""
+        if self._session_factory is None:
+            return None
+        try:
+            from sqlalchemy import select
+            from app.repositories.models import SourceObject
+            session = self._session_factory()
+            try:
+                row = session.execute(
+                    select(SourceObject.text).where(
+                        SourceObject.source_id == source_id,
+                        SourceObject.external_id == external_id
+                    )
+                ).scalar_one_or_none()
+                return row
+            finally:
+                session.close()
+        except Exception as exc:
+            self.persist_errors.append(f"get_text failed: {type(exc).__name__}: {exc}")
+            return None
+
+
     def set(
         self,
         source_id: str,
