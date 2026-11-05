@@ -1,91 +1,97 @@
+import csv
+import io
 import math
-from typing import Dict, Any, Union
+import logging
+from ultra_modules.labor_bid_price_calculator_core_engine import calculate_labor_bid
 
-class LaborBidPriceExportFormatter:
-    """
-    Formatter for Labor Bid Price calculation results.
-    Cleans data (NaN/None to 0.0), explicitly sets comments=0,
-    and generates a minimalist 3-line report.
-    """
+logger = logging.getLogger(__name__)
 
-    def __init__(self, raw_data: Dict[str, Any]):
-        self.raw_data = raw_data if raw_data is not None else {}
+def silent_audit_log(action, detail):
+    """Silently record every action for backend review without cluttering frontend."""
+    logger.info(f"AUDIT TRACE: {action} - {detail}")
 
-    def _clean_value(self, value: Any) -> float:
-        """Self-healing: converts None, NaN, and invalid strings to 0.0."""
-        if value is None:
-            return 0.0
-
-        if isinstance(value, str):
-            try:
-                # Remove commas and percentages if any
-                clean_str = value.replace(',', '').replace('%', '').strip()
-                val = float(clean_str)
-            except (ValueError, TypeError):
-                return 0.0
-        else:
-            try:
-                val = float(value)
-            except (ValueError, TypeError):
-                return 0.0
-
+def sanitize_value(val):
+    if val is None:
+        silent_audit_log("Data Repair", "Replaced None with 0.0")
+        return 0.0
+    if isinstance(val, (float, int)):
         if math.isnan(val):
+            silent_audit_log("Data Repair", "Replaced NaN with 0.0")
             return 0.0
+        return float(val)
+    if isinstance(val, str):
+        try:
+            cleaned = val.replace(',', '').replace('%', '')
+            fval = float(cleaned)
+            if math.isnan(fval):
+                silent_audit_log("Data Repair", f"Replaced NaN (from string '{val}') with 0.0")
+                return 0.0
+            silent_audit_log("Data Conversion", f"Converted string '{val}' to {fval}")
+            return fval
+        except Exception:
+            silent_audit_log("Data Repair", f"Replaced invalid string '{val}' with 0.0")
+            return 0.0
+    silent_audit_log("Data Repair", f"Replaced unsupported type {type(val)} with 0.0")
+    return 0.0
 
-        return val
+def format_export_data(raw_data):
+    clean_data = {}
+    if not isinstance(raw_data, dict):
+        silent_audit_log("Data Repair", "raw_data is not a dict, assigning default empty dict")
+        raw_data = {}
 
-    def format_export(self) -> Dict[str, Any]:
-        """
-        Returns a cleaned dictionary with guaranteed no NaN/None,
-        a strict comments=0 field, and the summary report.
-        """
-        # Define expected fields based on core engine output to ensure complete schema
-        expected_fields = [
-            'total_salary', 'actual_ss_base', 'social_security_cost',
-            'actual_pf_base', 'provident_fund_cost', 'disabled_fund_cost',
-            'total_cost_before_tax', 'tax', 'total_cost',
-            'margin', 'margin_rate', 'calculated_bid_price',
-            # Fields from CLI standard params
-            'base_salary', 'tax_rate', 'profit_margin', 'bid_price'
-        ]
+    keys_to_export = [
+        'total_salary', 'actual_ss_base', 'social_security_cost',
+        'actual_pf_base', 'provident_fund_cost', 'disabled_fund_cost',
+        'total_cost_before_tax', 'tax', 'total_cost', 'margin',
+        'margin_rate', 'calculated_bid_price'
+    ]
 
-        cleaned_data = {}
+    for key in keys_to_export:
+        val = raw_data.get(key, 0.0)
+        clean_data[key] = sanitize_value(val)
 
-        # Clean all provided data
-        for key, value in self.raw_data.items():
-            cleaned_data[key] = round(self._clean_value(value), 4)
+    return clean_data
 
-        # Ensure fallback for expected fields if they were completely missing
-        for key in expected_fields:
-            if key not in cleaned_data:
-                cleaned_data[key] = 0.0
+def generate_export_csv_string(clean_data):
+    output = io.StringIO()
+    writer = csv.writer(output)
+    # Zero comments, just header and data
+    headers = list(clean_data.keys())
+    writer.writerow(headers)
+    writer.writerow([clean_data[k] for k in headers])
+    return output.getvalue()
 
-        # Force compliance overrides
-        cleaned_data['comments'] = 0
+def generate_minimal_report(clean_data):
+    # Exactly 3 lines for WeChat / Feishu report
+    bid_price = clean_data.get('calculated_bid_price', 0.0)
+    total_cost = clean_data.get('total_cost', 0.0)
+    margin = clean_data.get('margin', 0.0)
+    margin_rate = clean_data.get('margin_rate', 0.0) * 100
 
-        # Extract key metrics for the summary
-        # Support both core engine naming and cli naming
-        bid_price = cleaned_data.get('calculated_bid_price') or cleaned_data.get('bid_price') or 0.0
-        total_cost = cleaned_data.get('total_cost') or 0.0
-        margin = cleaned_data.get('margin') or 0.0
-        margin_rate = cleaned_data.get('margin_rate') or cleaned_data.get('profit_margin') or 0.0
+    line1 = f"【报价测算结果】投标总价：{bid_price:.2f}元"
+    line2 = f"【成本明细】总成本（含税费）：{total_cost:.2f}元"
+    line3 = f"【收益预估】毛利：{margin:.2f}元（毛利率：{margin_rate:.2f}%）"
 
-        # Format the 3-line minimalist report text
-        # Line 1: Main Quote
-        # Line 2: Cost Breakdown Summary
-        # Line 3: Profitability
+    return f"{line1}\n{line2}\n{line3}"
 
-        report_text = (
-            f"【测算简报】单人综合报价：¥{bid_price:,.2f}\n"
-            f"▶ 刚性成本：¥{total_cost:,.2f} (含工资/社保/公积金/残保/税)\n"
-            f"▶ 预期毛利：¥{margin:,.2f} (毛利率 {margin_rate*100:.1f}%)"
-        )
+def export_and_report(params=None):
+    if params is None:
+        silent_audit_log("Default Assignment", "Missing params, using empty dict")
+        params = {}
 
-        cleaned_data['report_text'] = report_text
+    # Calculate base values using the core engine
+    raw_result = calculate_labor_bid(params)
 
-        return cleaned_data
+    # Clean up and ensure no NaN/None
+    clean_data = format_export_data(raw_result)
 
-def format_export(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Convenience function for direct usage."""
-    formatter = LaborBidPriceExportFormatter(data)
-    return formatter.format_export()
+    # Generate CSV and Report
+    csv_string = generate_export_csv_string(clean_data)
+    report_string = generate_minimal_report(clean_data)
+
+    return {
+        'clean_data': clean_data,
+        'csv_export': csv_string,
+        'report': report_string
+    }
