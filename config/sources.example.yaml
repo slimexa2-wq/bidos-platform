@@ -1,0 +1,35 @@
+sources:
+  - id: sichuan_gov_procurement
+    name: 四川政府采购网
+    trust_level: official
+    enabled: true
+    schedule: "*/30 * * * *"
+    discovery:
+      strategies:
+        - api_or_rss
+        - http
+        - playwright
+        - browser_agent
+        - human_fallback
+    requires_login: false
+    project_types:
+      - 劳务外包
+      - 劳务派遣
+    health_policy:
+      alert_after_failures: 2
+      stale_after_minutes: 90
+
+  - id: third_party_aggregator_demo
+    name: 第三方采招聚合源
+    trust_level: reference
+    enabled: false
+    schedule: "0 */2 * * *"
+    discovery:
+      strategies:
+        - http
+        - playwright
+        - human_fallback
+    requires_login: true
+    health_policy:
+      alert_after_failures: 1
+      stale_after_minutes: 180

@@ -1,0 +1,79 @@
+services:
+  api:
+    build: ./apps/api
+    environment:
+      BIDOS_ENV: development
+      # 质检修复：real profile 下 api 必须用真库，此前固定 mock 导致
+      # postgres 只建表无人读写。口令不入仓库：DATABASE_URL 由环境注入。
+      BIDOS_DATA_MODE: ${BIDOS_DATA_MODE:-mock}
+      DATABASE_URL: ${DATABASE_URL:-}
+      BIDOS_ORGANIZATION_ID: ${BIDOS_ORGANIZATION_ID:-}
+      REDIS_URL: redis://redis:6379/0
+    ports: ["8000:8000"]
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        VITE_DATA_MODE: api
+        VITE_API_BASE: /api
+    ports: ["8080:80"]
+    depends_on: [api]
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    profiles: ["real"]
+    environment:
+      POSTGRES_DB: bidos
+      POSTGRES_USER: bidos
+      # 口令不入仓库（质检整改）：必需变量，缺失时 compose 报错。
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in env}
+    volumes:
+      - bidos_pg:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    # 质检修复：宿主机端口对齐 REAL_DATA_RUNBOOK §3.2 约定的 55432。
+    ports: ["55432:5432"]
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["real"]
+    ports: ["6379:6379"]
+
+  worker:
+    profiles: ["real"]
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      # 质检修复：worker 补齐数据模式/库/组织三要素；口令由环境注入。
+      BIDOS_DATA_MODE: ${BIDOS_DATA_MODE:-postgres}
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in env}
+      BIDOS_ORGANIZATION_ID: ${BIDOS_ORGANIZATION_ID:-}
+      BIDOS_ENABLE_AUTO_SYNC: ${BIDOS_ENABLE_AUTO_SYNC:-0}
+    command: ["celery","-A","celery_app.celery_app","worker","--loglevel=INFO"]
+    depends_on: [redis, postgres]
+
+  scheduler:
+    profiles: ["real"]
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      BIDOS_ENABLE_AUTO_SYNC: ${BIDOS_ENABLE_AUTO_SYNC:-0}
+    command: ["celery","-A","celery_app.celery_app","beat","--loglevel=INFO"]
+    depends_on: [redis]
+
+  n8n:
+    image: n8nio/n8n:latest
+    profiles: ["automation"]
+    ports: ["5678:5678"]
+    environment:
+      N8N_SECURE_COOKIE: "false"
+    volumes:
+      - bidos_n8n:/home/node/.n8n
+
+volumes:
+  bidos_pg:
+  bidos_n8n:

@@ -1,0 +1,6 @@
+import { useState } from 'react'
+import { PageHeader } from '../components/PageHeader'
+import { useWorkspace } from '../services/workspace'
+import { TaskRows, WorkspaceNotice } from './WorkspaceUI'
+const LABELS:Record<string,string>={work:'工作跟进',opening:'开标提醒',bond:'保证金',competitor:'竞对机会',deadline:'报名 / 开标',assessment:'待评估',followup:'工作跟进',evaluation:'待评估',registration:'报名',result:'结果跟进',plan:'项目计划'}
+export function AlertsPage(){const ws=useWorkspace();const[kind,setKind]=useState('');const tasks=ws.data?.tasks||[];const kinds=[...new Set(tasks.map(t=>t.kind))];const rows=kind?tasks.filter(t=>t.kind===kind):tasks;return <section className="page ws-page"><PageHeader title="提醒" subtitle="与首页使用同一份待办，点击事项直接进入对应项目处理。" action={<button className="btn ghost" disabled={ws.refreshing} onClick={()=>void ws.refresh().catch(()=>{})}>刷新</button>}/><WorkspaceNotice {...ws}/><div className="tabs"><button className={!kind?'active':''} onClick={()=>setKind('')}>全部 {tasks.length}</button>{kinds.map(k=><button key={k} className={kind===k?'active':''} onClick={()=>setKind(k)}>{LABELS[k]||k} {tasks.filter(t=>t.kind===k).length}</button>)}</div>{ws.data&&<div className="panel ws-taskpanel"><TaskRows tasks={rows}/></div>}<p className="ws-subtle">退回状态、项目日期和工作跟进更新后，相关提醒会随业务状态更新。</p></section>}

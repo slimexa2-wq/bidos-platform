@@ -1,0 +1,331 @@
+# BidOS 官网来源配置（P3 官网接入）
+#
+# ⚠️ 重要声明（交接文档 §7.2 / §13）：
+#   本文件里的 URL、列表页路径、解析规则，**逐站核过之后**才允许把该来源标 verified: true。
+#   verified: false 的来源，系统只做「可访问性探测 + 失败可见」，不得对外承诺「已接入」。
+#
+# 2026-09-28 实测复核结果（scraper + signer，原始取证在 /tmp/scraper_evidence/）：
+#   #1 四川政府采购网      → 首页是 Vue SPA，http 策略结构上抓不到；真实数据源是
+#                            带签名的门户 JSON 接口。已新增 strategy: json_api 并实测
+#                            抓到真实公告 → verified: true（详见下方第 1 个来源）
+#   #2 全国公共资源交易平台(四川) → 已改为 search_api 走站点公开全文检索接口，实测通 → verified: true
+#   #3 成都公共资源交易服务中心  → 找到服务端渲染的真实列表页，实测抓 10/10 条 → verified: true
+#   #4 中国招标投标公共服务平台  → 确认被验证码拦截（网易易盾），按合规红线不做绕过 → verified: false
+#
+# 采集优先级（交接文档 §7.2）：官方 API/RSS → HTTP → Playwright → Browser Agent → 人工兜底
+#   已实现：strategy: http（CSS 选择器）、strategy: search_api（站点公开 JSON 检索接口）、
+#           strategy: json_api（带签名的门户 JSON 接口，签名实现见 connectors/signing.py）。
+#   未实现：需要验证码的来源；Playwright / Browser Agent / 人工兜底仅预留。
+#   注意：把 SPA 站点配成 http 策略只会稳定产出 parse_no_items —— 那是策略选错，不是页面改版。
+#
+# 维护原则（交接文档 §10 Phase 2）：先接少量最重要来源，不要为了「接了 100 个网站」牺牲可维护性。
+#   当前只配置 4 个四川/成都地区高频公开来源。
+
+sources:
+  # 1) 四川省级政府采购主渠道
+  #
+  # 2026-09-28 实测结论（scraper）：
+  #   首页 https://www.ccgp-sichuan.gov.cn/ 是 **Vue SPA**（2994 字节外壳 + <div id="app">），
+  #   服务端不吐任何公告 → http 策略结构上抓不到，必然报 parse_no_items。
+  #   真实数据源是它自己的门户 JSON 接口（已实测拿到真实公告）：
+  #       GET  /gpcms/rest/web/v2/info/selectInfoMoreChannel
+  #            ?siteId=94c965cc-c55d-4f92-8469-d5875c68bd04
+  #            &channelId=c5bff13f-21ca-4dac-b158-cb40accd3035   # 公告信息
+  #            &pageNo=1&pageSize=10
+  #       → {"data":{"rows":[{"title","noticeTime","id","noticeType","regionName","purchaser",...}],
+  #                  "total":1561011}}
+  #       详情页：https://www.ccgp-sichuan.gov.cn/article?id=<id>
+  #       支持标题关键词过滤：&title=物业服务 → 4,969 条；&title=劳务派遣 → 873 条
+  #       （无需签名时返回 {"code":"4009","msg":"验签比对失败"}，可作对照）
+  #
+  #   ⚠️ 该接口有**请求签名**，缺签名返回 {"code":"4009","msg":"验签比对失败"}。
+  #   签名算法已从前端 bundle 完整还原并实测通过（复现脚本见
+  #   /tmp/scraper_evidence/ccgp_sign.py）：
+  #       ts   = 当前毫秒时间戳
+  #       sign = MD5( SHA1_hex( f"{ts}_{path}_bosssoft_platform_095285" ) )   # path 不含 query
+  #       nsssjss = base64( RSA_PKCS1v15( f"{path}$${ts2}" ) )               # 公钥取自 static/config.js RSAPublicKey
+  #       请求头：time / url / sign / nsssjss；GET 另需 query 追加 _t=<ms>
+  #
+  #   因此本来源**暂不能置 verified: true**：现有 connector 只有 http(CSS 选择器) 与
+  #   search_api(无签名 JSON 检索) 两种策略，都不支持「带签名请求头 + 分页 JSON」，
+  #   需要新增策略（见 note 里的建议）。当前配置保持 http 策略 → 失败可见。
+  #
+  #   业务影响有限：四川政府采购网的公告已被来源 #2 省级平台聚合
+  #   （该接口按 ZHUANZAI=四川政府采购网 计数 3,421,737 条），不必等本来源打通。
+  - id: sichuan_gov_procurement
+    name: 四川政府采购网
+    trust_level: official
+    # 2026-09-28：json_api+signing 策略落地前维持 enabled（项目纪律：失败可见，
+    # 不允许静默漏抓）；其公告已被 #2 省级平台聚合覆盖，业务影响有限。
+    verified: true
+    note: >-
+      2026-09-30 实测通过：strategy=json_api 走门户签名 JSON 接口
+      （connectors/signing.py 的 ccgp_sichuan 方案），单次同步 100 条真实公告、0 错误。
+      此前 http 策略必败（SPA 外壳），已弃用。关键词口径 [劳务派遣/劳务外包/物业服务/保安服务/保洁]，
+      覆盖面是否满足业务线仍由业务确认。
+    strategy: json_api
+    schedule: "*/30 * * * *"
+    requires_login: false
+    # 真实「公告信息」列表页（SPA 路由，浏览器可正常打开；服务端只回外壳）
+    list_url: "https://www.ccgp-sichuan.gov.cn/noticeInformation"
+    base_url: "https://www.ccgp-sichuan.gov.cn"
+    timeout_seconds: 15
+    max_retries: 3
+    retry_backoff_seconds: 0.5
+    min_interval_seconds: 2
+    user_agent: "BidOSBot/0.3 (+contact: ops@xiangneng.example; public notices only)"
+    timezone_offset_hours: 8
+    # 2026-09-30 起走门户签名 JSON 接口（签名算法见 connectors/signing.py，
+    # 复现证据 /tmp/scraper_evidence/ccgp_sign.py）：不再用必败的 http 选择器。
+    json_api:
+      path: /gpcms/rest/web/v2/info/selectInfoMoreChannel
+      method: GET
+      query:
+        siteId: "94c965cc-c55d-4f92-8469-d5875c68bd04"
+        channelId: "c5bff13f-21ca-4dac-b158-cb40accd3035"
+        pageSize: 20
+      keyword_param: title
+      keywords: ["劳务派遣", "劳务外包", "物业服务", "保安服务", "保洁"]
+      pagination:
+        page_param: pageNo
+        start_page: 1
+        max_pages: 2
+      records_path: data.rows
+      total_path: data.total
+      code_path: code
+      message_path: msg
+      ok_codes: ["200"]
+      url_template: "https://www.ccgp-sichuan.gov.cn/article?id={id}"
+      record_map: {title: title, url: url, id: id, date: noticeTime, text: description}
+      date_formats: ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]
+      signing:
+        scheme: ccgp_sichuan
+        salt: bosssoft_platform_095285
+        rsa_public_key: "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCS2TZDs5+orLYCL5SsJ54+bPCVs1ZQQwP2RoPkFQF2jcT0HnNNT8ZoQgJTrGwNi5QNTBDoHC4oJesAVYe6DoxXS9Nls8WbGE8ZNgOC5tVv1WVjyBw7k2x72C/qjPoyo/kO7TYl6Qnu4jqW/ImLoup/nsJppUznF0YgbyU/dFFNBQIDAQAB"
+        variant: sha1_hex_md5
+        timestamp_query: _t
+    health_policy:
+      alert_after_failures: 3
+      stale_after_minutes: 90
+    project_types:
+      - 劳务外包
+      - 劳务派遣
+
+  # 2) 全国公共资源交易平台（四川省）—— 省级平台，已聚合全省地市州
+  #
+  # 2026-09-28 实测结论（据此改为 search_api 策略）：
+  #   该站栏目页 /jyxx/002002/transactionInfo.html 是 **JS 渲染**（13KB 外壳 + 25 个
+  #   script，服务端不吐列表），http 策略结构上抓不到任何条目，此前稳定报
+  #   parse_no_items —— 那不是「页面改版」，是策略选错。
+  #   该站前端自己在调用公开全文检索接口：
+  #       POST /inteligentsearch/rest/esinteligentsearch/getFullTextDataNew
+  #   实测：全库 3,421,692 条；近一月（2026-09-01~09-28）58,790 条；
+  #   标题含「劳务」近两月 1,110 条、含「物业」1,509 条。
+  #   记录自带 content（全文正文）/ linkurl（原文链接，可做证据回链）/
+  #   zhuanzai（发布机构）/ categorynum（分类码）/ webdate（发布日期）。
+  #   来源覆盖：四川政府采购网 + 成都/宜宾/自贡/绵阳/巴中/眉山/泸州/内江/乐山
+  #   等地市州交易中心（省级平台已聚合地市，无需逐市抓 21 个站）。
+  - id: sc_public_resource_trading
+    name: 全国公共资源交易平台（四川省）
+    trust_level: official
+    enabled: true
+    # 已实测：接口可达、返回结构化 JSON、字段与样本量见上。
+    # 未复核：关键词口径是否覆盖祥能全部业务线（应由业务确认）。
+    verified: true
+    note: "2026-09-28 实测通过：search_api 走站点公开全文检索接口；关键词口径待业务确认"
+    strategy: search_api
+    schedule: "*/30 * * * *"
+    requires_login: false
+    list_url: "https://ggzyjy.sc.gov.cn/"
+    base_url: "https://ggzyjy.sc.gov.cn"
+    timeout_seconds: 20
+    max_retries: 3
+    retry_backoff_seconds: 0.5
+    # 对政务站保持克制：每次请求间隔 2s（6 次请求 ≈ 12s）
+    min_interval_seconds: 2
+    user_agent: "BidOSBot/0.3 (+contact: ops@xiangneng.example; public notices only)"
+    timezone_offset_hours: 8
+    search:
+      path: /inteligentsearch/rest/esinteligentsearch/getFullTextDataNew
+      referer: "https://ggzyjy.sc.gov.cn/jyxx/002002/transactionInfo.html"
+      page_size: 30
+      max_pages: 2
+      lookback_days: 30
+      # 2026-09-28 实测：检索字段是 title（likeType=2 连续短语匹配）；
+      # titlenew 索引覆盖不全（「劳务」仅 5 条 vs title 445 条），勿改回。
+      keyword_field: titlenew  # 2026-09-30 实测：站点字段漂移，title 恒返 0 条，titlenew 同词同窗 326 条
+      date_field: webdate
+      # 广撒网词策略：接口是标题连续短语匹配，复合词（劳务外包/物业服务）命中率≈0，
+      # 单词广撒网后由本地二次过滤。命中量（近一月）：物业541/外包297/绿化242/人力资源226/
+      # 保洁130/安保124/保安97/派遣19/装卸11/社工9/驾驶员7。扩充时注意：词数 × max_pages = 请求数。
+      keywords:
+        - 物业
+        - 外包
+        - 绿化
+        - 人力资源
+        - 保洁
+        - 安保
+        - 保安
+        - 派遣
+        - 装卸
+        - 社工
+        - 驾驶员
+      record_map:
+        title: titlenew
+        url: linkurl
+        date: webdate
+        id: id
+        text: content
+        source_org: zhuanzai
+        category: categorynum
+    health_policy:
+      alert_after_failures: 3
+      stale_after_minutes: 90
+    project_types:
+      - 劳务外包
+      - 劳务派遣
+      - 物业服务
+
+  # 3) 成都市公共资源交易服务中心
+  #
+  # 2026-09-28 实测结论（scraper）：
+  #   真实公告列表页是 **服务端渲染的 ASP.NET 页面**（非 SPA）：
+  #       https://www.cdggzy.com/sitenew/notice/zfcg/List.aspx     ← 政府采购
+  #   入口来自首页 iframe 的 data-option 属性（首页 /sitenew/notice/List.aspx?cid=00040001
+  #   只是个 iframe 外壳）。列表容器 #contentlist，每条 .list-row，
+  #   结构为 [区县] / <a href="swNoticeContent.aspx?id=...">标题</a> / / 日期。
+  #   实测抓到 10 条真实公告（见 /tmp/scraper_evidence/evidence_report.json）。
+  #
+  #   ⚠️ 必须同时降 TLS 安全等级：www.cdggzy.com 的证书/密钥强度不满足
+  #   OpenSSL 3.x 默认 SECLEVEL=2，Python(httpx) 默认配置握手直接失败
+  #   （SSLV3_ALERT_HANDSHAKE_FAILURE），而 curl/浏览器能通 —— 不降级会被
+  #   误判成「站点不可达」。故配置 tls_security_level: 1。
+  - id: chengdu_public_resource_trading
+    name: 成都市公共资源交易服务中心
+    trust_level: official
+    enabled: true
+    verified: true
+    note: >-
+      2026-09-28 由 scraper 用 httpx(trust_env=False) 实抓列表页 HTML，并用项目自带
+      最小选择器引擎 _select('#contentlist .list-row') 命中 10 条真实公告
+      （标题+相对链接 swNoticeContent.aspx?id=... + 日期），已回验详情页 HTTP 200。
+      无需登录、无验证码。需 tls_security_level: 1 才能握手成功。
+    strategy: http
+    schedule: "*/30 * * * *"
+    requires_login: false
+    list_url: "https://www.cdggzy.com/sitenew/notice/zfcg/List.aspx"
+    # 列表页里的链接是相对路径，base_url 必须指向列表页本身，否则拼不出正确详情页
+    base_url: "https://www.cdggzy.com/sitenew/notice/zfcg/List.aspx"
+    tls_security_level: 1
+    timeout_seconds: 20
+    max_retries: 3
+    retry_backoff_seconds: 0.5
+    min_interval_seconds: 2
+    user_agent: "BidOSBot/0.3 (+contact: ops@xiangneng.example; public notices only)"
+    timezone_offset_hours: 8
+    parse:
+      # 实测命中：10/10 条 .list-row 全部解析成功
+      item_selector: "#contentlist .list-row"
+      title_selector: "a"
+      link_selector: "a[href]"
+      # 不配 date_selector：该行首个 .list-item 是【区县】而非日期，
+      # 交给 date_regex 在整个条目文本里取 YYYY-MM-DD
+      date_regex: "(\\d{4}-\\d{2}-\\d{2})"
+      date_formats:
+        - "%Y-%m-%d"
+        - "%Y/%m/%d"
+        - "%Y.%m.%d"
+    health_policy:
+      alert_after_failures: 3
+      stale_after_minutes: 90
+    project_types:
+      - 劳务外包
+      - 劳务派遣
+      - 物业服务
+
+  # 4) 中国招标投标公共服务平台（全国性补充来源）
+  #
+  # 2026-09-28 实测结论（scraper）：**确认存在验证码/反爬，HTTP 层拿不到公告列表**。
+  # 复核过程（原始响应留档 /tmp/scraper_evidence/ceb_captcha_probe.html、
+  # ceb_search_page.html）：
+  #   1. 首页「最新项目」走 https://www.cebpubservice.com/cutominfoapi/recommand/...
+  #      前端显式要求请求头 `Necaptcha-Validate`（网易易盾人机验证 token），
+  #      响应体还要用 DES(key='1qaz@wsx3e') 解密；无 token 时服务端直接回
+  #      混淆 JS 反爬挑战页（实测 200 但 body 是挑战脚本，不是 JSON）。
+  #   2. 「公告公示」子站搜索要求 `token=getCookie("dataToken")`，该 cookie 来自
+  #      /captcha/captcha/checkStatus —— 即必须先过验证码。
+  #   3. ctbpsp.com（公告公示 SPA）的 /cutominfoapi/* 响应体为加密密文，
+  #      页面加载网易易盾 ir-sdk（ir-sdk.dun.163.com）。
+  #   4. 前端 JS 里拼的搜索接口 /ctpsp/searchtenderprojectaction/*.do 实测 404，
+  #      nginx 层不存在该路径。
+  # 结论：不做验证码绕过（合规红线）。本来源保持 verified: false、失败可见。
+  #   若业务确需该平台，应走「人工兜底」或申请官方数据接口，不要在此硬抓。
+  # 附：首页 /monitorindustry/observe/*.shtml 是服务端渲染的，但内容是**平台自身
+  #   通知**（培训班、放假安排），不是招标公告，对找商机无价值，故不作为数据源。
+  - id: ceb_public_service
+    name: 中国招标投标公共服务平台
+    trust_level: official
+    # 2026-09-28：验证码拦截按合规红线不绕过，维持 enabled 失败可见；
+    # 人工兜底通道走 W6 SOP。
+    verified: false
+    note: >-
+      2026-09-28 由 scraper 复核：确认被验证码拦截（网易易盾 Necaptcha + dataToken
+      cookie + DES 加密响应），无 token 时返回 JS 反爬挑战页而非 JSON；前端搜索接口
+      404。按合规红线不做绕过，保持失败可见，交人工兜底。
+    strategy: http
+    schedule: "0 */2 * * *"
+    requires_login: false
+    # 「信息公开 → 交易公开」真实入口（服务端只回框架，列表需验证码后的接口）
+    list_url: "https://www.cebpubservice.com/ctpsp_iiss/searchbusinesstypebeforedooraction/getSearch.do"
+    base_url: "https://www.cebpubservice.com"
+    timeout_seconds: 20
+    max_retries: 2
+    retry_backoff_seconds: 0.5
+    min_interval_seconds: 3
+    user_agent: "BidOSBot/0.3 (+contact: ops@xiangneng.example; public notices only)"
+    timezone_offset_hours: 8
+    parse:
+      # 该页的公告列表由验证码后的接口填充，选择器不可能命中；
+      # 保留配置是为了让失败以 parse_no_items 形式显式暴露，而不是静默 0 条。
+      item_selector: "ul.list li, .list-content li"
+      title_selector: "a"
+      link_selector: "a[href]"
+      date_selector: ".date, span.time"
+      date_regex: "(\\d{4}[-/.]\\d{1,2}[-/.]\\d{1,2})"
+      date_formats:
+        - "%Y-%m-%d"
+        - "%Y/%m/%d"
+        - "%Y.%m.%d"
+    health_policy:
+      alert_after_failures: 2
+      stale_after_minutes: 180
+    project_types:
+      - 劳务外包
+      - 劳务派遣
+
+  # 5) 需要登录的来源示例：Connector 不实现自动登录，直接标记人工处理
+  #    （默认 enabled: false，仅演示 requires_login 语义，不参与同步）
+  - id: third_party_login_required_demo
+    name: 第三方采招聚合源（需登录，示例）
+    trust_level: reference
+    enabled: false
+    verified: false
+    note: "示例来源，仅演示 requires_login；Connector 不自动登录，交人工处理"
+    strategy: http
+    schedule: "0 */2 * * *"
+    requires_login: true
+    list_url: "https://example.invalid/notices"
+    base_url: "https://example.invalid"
+    timeout_seconds: 15
+    max_retries: 1
+    min_interval_seconds: 5
+    user_agent: "BidOSBot/0.3 (+contact: ops@xiangneng.example)"
+    timezone_offset_hours: 8
+    parse:
+      item_selector: "table.notice tr"
+      title_selector: "a"
+      link_selector: "a[href]"
+      date_regex: "(\\d{4}-\\d{2}-\\d{2})"
+    health_policy:
+      alert_after_failures: 1
+      stale_after_minutes: 180

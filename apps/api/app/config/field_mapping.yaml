@@ -1,0 +1,749 @@
+# BidOS 字段映射配置（Phase 0 / Phase 1 交付物）
+#
+# 用途
+#   1) excel_connector.py 按本文件把 Excel 列映射成规范化字段（只读，绝不写回原表）。
+#   2) import_excel.py 按 target 写入 PostgreSQL 规范化表。
+#   3) build_data_dictionary.py 用本文件补齐数据字典里「无法自动推断」的 4 项：
+#      ③ 字段含义  ④ 维护人/更新频率  ⑤ 原始来源  ⑥ 是否后续变化
+#
+# ⚠️ 本版本已用真实业务表逐 Sheet 核对（不是占位初判）
+# ---------------------------------------------------------------
+#  目录：/Users/mini/mnt/市场共享文件/AI小程序收集汇总资料/（只读，禁止写入/另存/改名）
+#  核对内容：文件名 / Sheet 名（含尾随空格）/ 表头行 / 每一列的列名 / 合并单元格 / 样例值
+#  核对方式：openpyxl read_only=True + 直接解析 xlsx 内部 XML 取合并区域
+#  核对结果：5 个文件、111 个可见 Sheet、0 个隐藏 Sheet
+#
+#  仍然**不能**由工程自动推断、必须业务填写的 4 项：
+#    ③ 字段含义  ④ 维护人/更新频率  ⑤ 原始来源  ⑥ 是否后续变化
+#  这些在数据字典里一律留 `待业务确认` 空位，**不编造**。
+#
+# 字段 kind 取值
+#   fact    事实字段（客观记录：公告时间、中标价、预算、保证金金额……）
+#   human   人工判断字段（人的结论/理由/评估：未参与原因、目前进度、优先级……）
+#   unknown 未判定（数据字典里标 unknown，等业务确认）
+#
+# status 取值
+#   confirmed     已用真实文件核对过（文件/Sheet/表头行/列名/映射）
+#   待业务确认     语义无法确定，等待招投标部门填写或确认，禁止当既成事实使用
+#   auto_inferred 由启发式规则自动初判，需人工复核
+#
+# record_type 取值
+#   project  该 Sheet 每行是一个项目 → 必须有可映射到 projects.name 的列
+#   entity   该 Sheet 每行是一个实体（渠道、重点关注企业清单）→ 只产出实体 + Source Pointer
+#
+# 三组新增的结构化键（真实表结构逼出来的，不是过度设计）
+#   header_row_confirmed : true 时才采信 header_row；否则自动探测
+#   sheet_header_rows    : 同一个文件里不同 Sheet 表头行不同（真表确实如此），按 Sheet 覆盖
+#   sheet_fields         : 同一个列名在不同 Sheet 语义不同（真表确实如此），按 Sheet 覆盖字段定义
+#   unmapped_sheets      : 已识别但**有意不导入**的 Sheet，附原因；导入报告会显式列出，绝不静默跳过
+
+version: 2
+
+verified_against:
+  directory: /Users/mini/mnt/市场共享文件/AI小程序收集汇总资料/
+  verified_at: "2026-09-24"
+  files:
+    - 盲投项目信息 收集汇总表2026(3).xlsx
+    - 投标项目计划9.13.xlsx
+    - （汇总）主要竞争对手 投标项目统计.xlsx
+    - 盲投渠道表及重点关注企业8.14.xlsx
+    - 投标项目汇总9.17.xlsx
+  visible_sheets: 111
+  hidden_sheets: 0
+
+# ─────────────────────────────────────────────────────────────
+# 一、事实 / 人工判断 启发式规则（数据字典 ⑦ 项的自动初判依据）
+#    只做初判，输出中必须带 auto_inferred 标记，等人工复核。
+# ─────────────────────────────────────────────────────────────
+field_kind_rules:
+  human_keywords:
+    - 是否参与
+    - 是否
+    - 结论
+    - 判断
+    - 原因
+    - 备注
+    - 说明
+    - 评估
+    - 建议
+    - 意向
+    - 优先级
+    - 风险
+    - 复盘
+    - 经验
+    - 负责人意见
+    - 讨论
+    - 跟进
+    - 放弃
+    - 理由
+    - 进度
+    - 计划
+    - 情况
+    - 简述
+  fact_keywords:
+    - 公告时间
+    - 发布时间
+    - 报名截止
+    - 开标时间
+    - 投标截止
+    - 递交截止
+    - 中标价
+    - 中标金额
+    - 报价
+    - 预算
+    - 控制价
+    - 限价
+    - 保证金
+    - 金额
+    - 日期
+    - 时间
+    - 期限
+    - 服务期
+    - 地区
+    - 区域
+    - 名称
+    - 甲方
+    - 招标人
+    - 采购人
+    - 代理机构
+    - 中标单位
+    - 中标人
+    - 成交供应商
+    - 结果
+    - 负责人
+    - 网址
+    - 链接
+    - 编号
+    - 地址
+    - 电话
+    - 联系人
+    - 注册资本
+    - 资质
+    - 规模
+    - 人数
+    - 折扣率
+    - 排名
+    - 评分
+    - 公司
+    - 单位
+    - 平台
+    - 账号
+    - 密码
+    - 频率
+    - 类型
+    - 份数
+    - 费用
+  # 当 human 与 fact 关键词同时命中时的优先级
+  precedence: human
+
+# ─────────────────────────────────────────────────────────────
+# 二、实体规范化规则（交接文档 §5：禁止 LLM 临时猜）
+#     canonical_name = 去空格 + 全角转半角 + 去括号后缀 + 去尾部公司形式词
+# ─────────────────────────────────────────────────────────────
+entity_normalization:
+  strip_chars: [" ", "　", "\t", "\n", "(", ")", "（", "）"]
+  # 仅在「完全一致」判定为同一实体时使用；不完全一致只能进 entity_aliases 待人工确认
+  company_suffixes:
+    - 有限责任公司
+    - 股份有限公司
+    - 有限公司
+    - 集团有限公司
+    - 集团
+    - 公司
+    - 分公司
+    - 支公司
+    - 办事处
+    - 厂
+    - 中心
+    - 研究院
+  # 地域后缀（如「XX集团成都分公司」）：剥掉后只作为 alias 候选，绝不自动合并
+  region_suffixes:
+    - 成都分公司
+    - 四川分公司
+    - 重庆分公司
+    - 成都
+    - 四川
+    - 重庆
+  alias_source: entity_aliases   # 统一走别名表，不由 LLM 现场判断
+  # 真表里实体列混着**非实体占位值**（参与单位列写「未参与」、中标单位列写「流标」「未公示」），
+  # 一律不当实体建，否则会造出一堆假公司。比对时做全角/空白归一化。
+  entity_blacklist:
+    - 未参与
+    - 不参与
+    - 未投标
+    - 未中标
+    - 未公示
+    - 流标
+    - 废标
+    - 放弃
+    - 弃标
+    - 无
+    - 待定
+    - 未知
+    - 其他
+    - 暂无
+    - 未定
+  # ── 本公司主体（我方运营单位）──────────────────────────────
+  # 为什么需要它：
+  #   project_results.winner 的真值大量是「四川祥能人力资本服务有限公司」（我司自己）。
+  #   此前没有本公司实体，导致**我方中标项目无法建立 winner 关系**，
+  #   57 条「祥能人力」中标记录全部落入 unmatched（见 deliverables/entity_graph_report.json）。
+  #
+  # 登记纪律（交接文档 §5「实体不猜」）：
+  #   1. 只登记 project_results.winner 里**逐字出现过**的法定名称，不做推测、不拼名字；
+  #   2. 建成 entity_type='company'（我方运营单位），**绝不是 competitor**，
+  #      否则会把我司自己算成竞对；
+  #   3. aliases 写入 entity_aliases，用于归并**同一主体的错别字变体**；
+  #   4. 拿不准的一律不写在这里，进报告的「人工确认清单」。
+  own_entities:
+    - canonical: 四川祥能人力资本服务有限公司
+      aliases:
+        - 四川祥能人力资木服务有限公司   # 真表把「本」录成「木」，1 条
+    - canonical: 四川祥能保安服务有限公司
+    - canonical: 江安祥能人力资源服务有限公司
+    - canonical: 成都市祥能人力资源服务有限公司
+
+# ─────────────────────────────────────────────────────────────
+# 三、目标字段词表（target 只能取这些值，import_excel.py 据此路由）
+#    注意：只有 projects.* / results.* / bonds.* / meta.* 四个前缀会被识别，
+#          其余前缀会被忽略（写错前缀 = 静默丢字段，改配置时必须核对本段）。
+# ─────────────────────────────────────────────────────────────
+targets:
+  # → projects 表（列名必须与 models.py 的 Project 完全一致）
+  projects.name: {orm: projects, column: name, type: text, required: true}
+  projects.client_name: {orm: projects, column: client_name, type: text}
+  projects.region: {orm: projects, column: region, type: text}
+  projects.project_type: {orm: projects, column: project_type, type: text}
+  projects.status: {orm: projects, column: status, type: text}
+  projects.budget: {orm: projects, column: budget, type: money}
+  projects.deadline: {orm: projects, column: deadline, type: datetime}
+  projects.workflow_stage: {orm: projects, column: workflow_stage, type: text}
+  # project_end_at 必须配套 project_end_date_kind（exact / estimated / manual）
+  projects.project_end_at: {orm: projects, column: project_end_at, type: datetime, requires: project_end_date_kind}
+  projects.project_end_date_kind: {orm: projects, column: project_end_date_kind, type: enum, values: [exact, estimated, manual]}
+  projects.service_term_months: {orm: projects, column: metadata, type: int, note: 服务期限（月），仅用于推算 estimated 结束日期}
+  # 服务开始日期：只有它 + 服务期限同时存在时才推算结束日期，且必须标 estimated
+  projects.service_start_at: {orm: projects, column: metadata, type: datetime, note: 已确认的服务开始日期}
+  projects.source_of_truth: {orm: projects, column: source_of_truth, type: text}
+  # → entities / entity_aliases（文本列会额外派生实体）
+  entities.client: {orm: entities, entity_type: client}
+  entities.competitor: {orm: entities, entity_type: competitor}
+  entities.agency: {orm: entities, entity_type: agency}
+  entities.company: {orm: entities, entity_type: company, note: 我方运营单位/报名主体}
+  # → project_results 表
+  results.result: {orm: project_results, column: result, type: enum, values: [中标, 未中标, 放弃]}
+  results.result_date: {orm: project_results, column: result_date, type: date, note: 中标/结果公布日期}
+  results.winner: {orm: project_results, column: winner, type: text}
+  results.winning_price: {orm: project_results, column: winning_price, type: money}
+  results.our_price: {orm: project_results, column: our_price, type: money}
+  results.discount_rate: {orm: project_results, column: metadata.discount_rate, type: float}
+  results.reasons: {orm: project_results, column: reasons, type: text_list}
+  results.lessons: {orm: project_results, column: lessons, type: text_list}
+  # → bid_bond_ledger 表（只认这 8 个键，其余 bonds.* 键会被静默丢弃，别写）
+  bonds.amount: {orm: bid_bond_ledger, column: amount, type: money}
+  bonds.paid_at: {orm: bid_bond_ledger, column: paid_at, type: datetime}
+  bonds.result_published_at: {orm: bid_bond_ledger, column: result_published_at, type: datetime}
+  bonds.expected_refund_at: {orm: bid_bond_ledger, column: expected_refund_at, type: datetime}
+  bonds.actual_refund_at: {orm: bid_bond_ledger, column: actual_refund_at, type: datetime}
+  bonds.status: {orm: bid_bond_ledger, column: status, type: enum, values: [未缴纳, 已缴纳, 待退回, 逾期未退, 已退回, 无需退回]}
+  bonds.bid_section: {orm: bid_bond_ledger, column: bid_section, type: text}
+  bonds.owner_name: {orm: bid_bond_ledger, column: metadata.owner_name, type: text}
+  # → 仅入 metadata / 人工决策，不直接写正式字段
+  meta.announcement_at: {orm: metadata, type: datetime, note: 招标/公告时间}
+  meta.registration_deadline: {orm: metadata, type: datetime}
+  meta.open_bid_at: {orm: metadata, type: datetime, note: 开标时间}
+  meta.planned_procurement_at: {orm: metadata, type: text, note: 计划招采时间（真表里是「9月1日9时」这种缺年份文本，不能当日期用）}
+  meta.source_url: {orm: metadata, type: text}
+  meta.project_code: {orm: metadata, type: text}
+  meta.region: {orm: metadata, type: text}
+  meta.owner_name: {orm: metadata, type: text, note: 项目负责人}
+  meta.note: {orm: metadata, type: text}
+  meta.row_serial: {orm: metadata, type: text, note: 原表「序号」列，跨 Sheet 交叉引用用，不是业务字段}
+  meta.year: {orm: metadata, type: text}
+  meta.month: {orm: metadata, type: text}
+  meta.platform: {orm: metadata, type: text, note: 招采平台/招标平台}
+  meta.project_address: {orm: metadata, type: text}
+  meta.business_category: {orm: metadata, type: text, note: 业务类别（企业/机关/酒店/保安…）}
+  meta.procurement_method: {orm: metadata, type: text, note: 采购方式（公开/询价/竞标/比选/谈判/磋商）}
+  meta.project_scenario: {orm: metadata, type: text, note: 项目来源场景（新增/盲投/续签/新开）}
+  meta.position_type: {orm: metadata, type: text, note: 岗位类型}
+  meta.headcount: {orm: metadata, type: text}
+  meta.headcount_and_cap: {orm: metadata, type: text, note: 「人数需求，限价」混合列，未拆分}
+  meta.management_fee: {orm: metadata, type: text, note: 管理费（元/人/月），单位不统一}
+  meta.estimated_total: {orm: metadata, type: text, note: 预估总价}
+  meta.registration_fee: {orm: metadata, type: text, note: 报名费}
+  meta.print_fee: {orm: metadata, type: text, note: 打印费}
+  meta.bid_doc_copies: {orm: metadata, type: text, note: 资料份数}
+  meta.survey_required: {orm: metadata, type: text, note: 是否踏勘}
+  meta.survey_helper: {orm: metadata, type: text, note: 踏勘协助负责人}
+  meta.win_service_fee: {orm: metadata, type: text, note: 中标服务费}
+  meta.performance_bond: {orm: metadata, type: text, note: 履约保证金（万元）——与投标保证金是两回事，不进 bid_bond_ledger}
+  meta.book_owner: {orm: metadata, type: text, note: 标书负责情况}
+  meta.system_entered: {orm: metadata, type: text, note: 系统录入}
+  meta.blind_bid_rank: {orm: metadata, type: text, note: 盲投排名}
+  meta.quote_score: {orm: metadata, type: text, note: 报价评分}
+  meta.quote_type: {orm: metadata, type: text, note: 报价类型}
+  meta.contract_signed_at: {orm: metadata, type: datetime, note: 合同签订时间——**不等于服务开始日期**，未确认前不参与结束日期推算}
+  meta.refund_expected_note: {orm: metadata, type: text, note: 预计退款时间（真表是「节前/节后」，不是日期）}
+  meta.follow_up_owner: {orm: metadata, type: text, note: 跟进人}
+  meta.info_screener: {orm: metadata, type: text, note: 盲投信息筛选人}
+  meta.channel_name: {orm: metadata, type: text, note: 信息渠道名}
+  meta.screening_frequency: {orm: metadata, type: text}
+  meta.keyword: {orm: metadata, type: text}
+  meta.category: {orm: metadata, type: text}
+  # 我方内部单位/片区：真表里是「重庆/保安/市场/双流/郫都/龙泉/宜宾/广元」这类业务片区，
+  # 以及「总公司/保安公司」「祥能人力/江安祥能/祥能保安」。
+  # 到底是 7 个真实运营实体（应建 company 实体）还是纯业务标签，**需业务确认**；
+  # 在确认前只入 metadata，不建实体（否则会造出名为「重庆」的公司）。
+  meta.business_unit: {orm: metadata, type: text, note: 所属公司/业务片区，待业务确认是否应建实体}
+  meta.registration_entity: {orm: metadata, type: text, note: 报名主体，待业务确认是否应建实体}
+  meta.participating_entity: {orm: metadata, type: text, note: 参与单位（含「未参与」占位值，非纯实体列），待业务确认}
+  # 人工判断字段：一律只入 metadata / 走人工决策表，禁止自动写正式字段
+  meta.participate_decision: {orm: metadata, type: human, note: 是否参与/报名参与情况，人工决策}
+  meta.not_participate_reason: {orm: metadata, type: human, note: 未参与原因，人工判断}
+  meta.evaluation_note: {orm: metadata, type: human, note: 评估备注，人工判断}
+  meta.progress: {orm: metadata, type: human, note: 目前进度/项目进度，人工填写}
+  meta.actual_progress: {orm: metadata, type: human, note: 实际进度，人工填写}
+  meta.plan: {orm: metadata, type: human, note: 下一步计划，人工填写}
+  meta.priority: {orm: metadata, type: human, note: 优先级，人工判断}
+  meta.bid_opening_staff: {orm: metadata, type: text, note: 开标人员}
+  meta.cooperating_units: {orm: metadata, type: text, note: 配合单位}
+  # 安全红线：这两列是明文凭据，**禁止入库**
+  meta.credential_do_not_store: {orm: metadata, type: forbidden, note: 明文账号/密码，禁止写入任何库表}
+
+# ─────────────────────────────────────────────────────────────
+# 四、来源（5 个真实业务文件，逐 Sheet 核对）
+# ─────────────────────────────────────────────────────────────
+sources:
+  # ══ 1. 盲投项目信息收集汇总表（Phase 1 优先级 1：盲投信息）══════
+  - source_id: blind_bid_2026
+    name: 盲投项目信息收集汇总表2026
+    file: 盲投项目信息 收集汇总表2026(3).xlsx
+    header_row: 2
+    header_row_confirmed: true     # 第 1 行是标题「盲投项目信息收集汇总表0202」，第 2 行才是表头
+    entity_type_hint: client
+    trust_level: internal
+    record_type: project
+    status: confirmed
+    sheets:
+      - "1月"
+      - "2月"
+      - "3月"
+      - "4月"
+      - "5月"
+      - "6月"
+      - "7月"
+      - "8月"
+      - "9月"
+      - "1月盲投未参与"
+      - "2月盲投未参与"
+      - "2026年未参与"
+    unmapped_sheets:
+      盲投总表: 月度盲投数量/报名费汇总（聚合统计，非项目台账，不进项目主表）
+    fields:
+      序号:                 {target: meta.row_serial, kind: fact, status: confirmed}
+      项目区域:             {target: projects.region, kind: fact, status: 待业务确认}   # 值为「宜宾/广元」，是业务片区还是行政区划需确认
+      项目类型:             {target: meta.business_category, kind: fact, status: 待业务确认}  # 1月..9月 里是「劳务外包/劳务派遣」（业务类别）
+      项目类型_2:           {target: meta.procurement_method, kind: fact, status: 待业务确认}  # 同名重复列，值是「公开/询价」
+      招标时间:             {target: meta.announcement_at, kind: fact, status: confirmed}  # 真表是裸 Excel 序列号（如 46023）
+      报名截止时间:         {target: projects.deadline, kind: fact, status: confirmed}
+      开标时间:             {target: meta.open_bid_at, kind: fact, status: confirmed}
+      甲方名称:             {target: projects.client_name, kind: fact, entity: client, status: confirmed}
+      代理机构:             {target: entities.agency, kind: fact, entity: agency, status: confirmed}  # 大量「/」占位
+      项目名称:             {target: projects.name, kind: fact, required: true, status: confirmed}
+      招标金额:             {target: projects.budget, kind: fact, status: 待业务确认}   # 真表是长描述文本（含不可竞争费用拆分），无法可靠转数字
+      服务期限:             {target: projects.service_term_months, kind: fact, status: confirmed}
+      服务开始日期:         {target: projects.service_start_at, kind: fact, status: 待业务确认}  # 只有它+服务期限才推算 estimated 结束日期；真表少数行有
+      项目情况简述:         {target: meta.note, kind: human, status: 待业务确认}        # 人工撰写的项目描述
+      招标公告网址:         {target: meta.source_url, kind: fact, status: confirmed}
+      报名参与情况统计:     {target: meta.participate_decision, kind: human, status: 待业务确认}  # 值为「报名参与/报名未参与」
+      报名参与情况:         {target: meta.participate_decision, kind: human, status: 待业务确认}  # 4月~9月 的列名变体
+      信息筛选人:           {target: meta.info_screener, kind: fact, status: confirmed}        # 4月~9月 才有
+      报名费用:             {target: meta.registration_fee, kind: fact, status: confirmed}
+      备注:                 {target: meta.note, kind: human, status: confirmed}
+      中标单位:             {target: results.winner, kind: fact, status: confirmed}   # 不设 entity：既可能是我方也可能是我方渠道方
+      中标金额（万元）:     {target: results.winning_price, kind: fact, status: 待业务确认}  # 单位混乱：有 531395.25（元）也有 40元/人/月
+      项目情况:             {target: meta.project_scenario, kind: human, status: confirmed}
+      参与单位:             {target: meta.participating_entity, kind: fact, status: 待业务确认}  # 值含「未参与」，不是纯实体列；是否建实体需业务确认
+      报名费（元）:         {target: meta.registration_fee, kind: fact, status: confirmed}
+      打印费（元）:         {target: meta.print_fee, kind: fact, status: confirmed}
+      资料份数:             {target: meta.bid_doc_copies, kind: fact, status: confirmed}
+      是否中标:             {target: results.result, kind: fact, status: confirmed}
+      中标金额（万元）:     {target: results.winning_price, kind: fact, status: 待业务确认}
+      投标保证金（元）:     {target: bonds.amount, kind: fact, status: confirmed}
+      中标服务费（元）:     {target: meta.win_service_fee, kind: fact, status: confirmed}
+      标书负责情况:         {target: meta.book_owner, kind: fact, status: confirmed}
+      是否踏勘:             {target: meta.survey_required, kind: fact, status: confirmed}
+      未参与原因:           {target: meta.not_participate_reason, kind: human, status: confirmed}
+      限价:                 {target: projects.budget, kind: fact, status: confirmed}
+      中标价格:             {target: results.winning_price, kind: fact, status: 待业务确认}
+      折扣率:               {target: results.discount_rate, kind: fact, status: confirmed}
+
+  # ══ 2. 我司投标项目计划（Phase 1 优先级 2：我司参与/未参与项目）══
+  - source_id: bid_plan_2026
+    name: 投标项目计划（周计划 + 中标明细）
+    file: 投标项目计划9.13.xlsx
+    header_row: 2
+    header_row_confirmed: true     # 第 1 行是「9月第三周招采项目计划表」这类标题
+    entity_type_hint: client
+    trust_level: internal
+    record_type: project
+    status: confirmed
+    sheets:
+      # 周计划（38 个，含尾随空格，必须逐字一致）
+      - "9月第三周  "
+      - "9月第二周 "
+      - "9月第一周"
+      - "8月第一周  "
+      - "8月第二周 "
+      - "8月第三周  "
+      - "8月第四周 "
+      - "7月第一周 "
+      - "7月第二周 "
+      - "7月第三周"
+      - "7月第四周 "
+      - "6月第五周"
+      - "6月第四周"
+      - "6月第三周 "
+      - "6月第二周"
+      - "6月第一周"
+      - "5月第四周"
+      - "5月第三周 "
+      - "5月第二周 "
+      - "5月第一周 "
+      - "4月第四周"
+      - "4月第三周"
+      - "4月第二周"
+      - "4月第一周"
+      - "3月第五周 "
+      - "3月第四周  "
+      - "3月第三周 "
+      - "3月第二周"
+      - "3月第一周"
+      - "2月第四周"
+      - "2月第一周"
+      - "1月第四周 "
+      - "1月第三周"
+      - "1月第一周"
+      - "12月第4周"
+      - "12月第3周"
+      - "12月第2周"
+      - "12月第1周"
+      # 中标项目明细（4 个）
+      - "9月中标项目明细"
+      - "8月中标项目明细"
+      - "7月中标项目明细 "
+      - "6月中标项目明细"
+    unmapped_sheets:
+      "9月计划、目标进度 ": 月度计划/目标达成统计（聚合统计，非项目台账）
+      "8月计划、目标进度": 月度计划/目标达成统计（聚合统计，非项目台账）
+      "7月计划、目标进度": 月度计划/目标达成统计（聚合统计，非项目台账）
+      "6月目标进度": 月度计划/目标达成统计（聚合统计，非项目台账）
+      "5月计划、目标进度": 月度计划/目标达成统计（聚合统计，非项目台账）
+      "4月目标完成进度": 月度目标达成统计（聚合统计，非项目台账）
+      "3月目标完成进度": 月度目标达成统计（聚合统计，非项目台账）
+      "2月目标完成情况": 月度目标达成统计（聚合统计，非项目台账）
+      "4月项目复盘": 报价复盘（多段无表头区域，结构不固定，需业务确认后再单独建模）
+      "4月第三周项目复盘 ": 报价复盘（表头在第 2 行且左侧两列空，结构不固定）
+      "4月第二周项目复盘": 报价复盘（表头行不稳定，自动探测落在第 10 行）
+      "5月第三周项目复盘": 空 Sheet（max_row=1，仅表名，无任何数据）
+      重点关注项目: 关注清单（列名是「项目/甲方名称」混合列，无法确定是项目还是实体，需业务确认后单独映射）
+    fields:
+      序号:                 {target: meta.row_serial, kind: fact, status: confirmed}
+      项目类型:             {target: meta.project_scenario, kind: human, status: 待业务确认}  # 周计划里是「新增/盲投/续签/新开」（项目来源场景，人工填写）
+      项目名称:             {target: projects.name, kind: fact, required: true, status: confirmed}
+      甲方名称:             {target: projects.client_name, kind: fact, entity: client, status: confirmed}
+      报名主体:             {target: meta.registration_entity, kind: fact, status: 待业务确认}  # 值为「总公司/保安公司」，属我方运营主体，是否建实体待确认
+      项目地址:             {target: meta.project_address, kind: fact, status: 待业务确认}   # 是否可归一到 projects.region 需业务确认
+      人数需求，限价:       {target: meta.headcount_and_cap, kind: fact, status: 待业务确认}  # 新表头（9月起）：混合列，既有「446万元」也有「154人，管理费60元/人/月」
+      # 旧表头（12月~6月）：同一个含义的列，列名里带换行符，必须逐字一致
+      "标的（中标金额）\n人数需求": {target: meta.headcount_and_cap, kind: fact, status: 待业务确认}
+      计划招采时间:         {target: meta.planned_procurement_at, kind: fact, status: 待业务确认}  # 真值是「9月1日9时」，缺年份，不能当日期
+      招采方式:             {target: meta.procurement_method, kind: fact, status: confirmed}
+      投标保证金:           {target: bonds.amount, kind: fact, status: confirmed}
+      目前进度:             {target: meta.progress, kind: human, status: confirmed}
+      实际进度:             {target: meta.actual_progress, kind: human, status: 待业务确认}  # 仅 4月第一周 有这个列
+      计划:                 {target: meta.plan, kind: human, status: confirmed}
+      项目负责人:           {target: meta.owner_name, kind: fact, status: confirmed}
+      踏勘协助负责人:       {target: meta.survey_helper, kind: fact, status: confirmed}
+      开标人员:             {target: meta.bid_opening_staff, kind: fact, status: 待业务确认}  # 仅 7月~3月 的周计划有
+      配合单位:             {target: meta.cooperating_units, kind: fact, status: 待业务确认}  # 仅 7月~3月 的周计划有
+      优先级:               {target: meta.priority, kind: human, status: confirmed}
+      # ── 中标项目明细专用 ──
+      所属公司:             {target: meta.business_unit, kind: fact, status: 待业务确认}  # 值为「宜宾/龙泉/重庆」等业务片区，是否为我方运营实体需确认
+      项目情况:             {target: meta.project_scenario, kind: human, status: confirmed}
+      开标时间:             {target: meta.open_bid_at, kind: fact, status: confirmed}
+      代理机构:             {target: entities.agency, kind: fact, entity: agency, status: confirmed}
+      项目类型_2:           {target: meta.procurement_method, kind: fact, status: 待业务确认}  # 同名重复列，值是「公开」
+      参与单位:             {target: meta.participating_entity, kind: fact, status: 待业务确认}  # 值含「未参与」，不是纯实体列；是否建实体需业务确认
+      中标单位:             {target: results.winner, kind: fact, status: confirmed}   # 真值大量是「四川祥能人力资本服务有限公司」（我司自己），绝不能当竞对
+      限价（万元）:         {target: projects.budget, kind: fact, status: confirmed}
+      中标金额（万元）:     {target: results.winning_price, kind: fact, status: 待业务确认}  # 单位混乱：既有 195.903252 也有「42元/人/月」
+      人数:                 {target: meta.headcount, kind: fact, status: confirmed}
+      单人管理费（元/人/月）: {target: meta.management_fee, kind: fact, status: confirmed}
+    # 同名列在不同 Sheet 语义不同：中标项目明细里「项目类型」是业务类别（企业/机关）
+    sheet_fields:
+      "9月中标项目明细":
+        项目类型: {target: meta.business_category, kind: fact, status: 待业务确认}
+      "8月中标项目明细":
+        项目类型: {target: meta.business_category, kind: fact, status: 待业务确认}
+      "7月中标项目明细 ":
+        项目类型: {target: meta.business_category, kind: fact, status: 待业务确认}
+      "6月中标项目明细":
+        项目类型: {target: meta.business_category, kind: fact, status: 待业务确认}
+
+  # ══ 3. 竞对投标项目统计（Phase 1 优先级 3：竞对数据）══════════
+  - source_id: competitor_stats
+    name: 主要竞争对手投标项目统计
+    file: （汇总）主要竞争对手 投标项目统计.xlsx
+    header_row: 2
+    header_row_confirmed: true     # 第 1 行是「竞对投标项目统计（2026年8月）」这类标题
+    entity_type_hint: competitor
+    trust_level: internal
+    record_type: project
+    status: confirmed
+    sheets:
+      - "统计表"
+      - "2025.01"
+      - "2025.02"
+      - "2025.03"
+      - "2025.04"
+      - "2025.05"
+      - "2025.06"
+      - "2025.07"
+      - "2025.08"
+      - "2025.09"
+      - "2025.11"
+      - "2025.12"
+      - "2026.01"
+      - "2026.02"
+      - "2026.03"
+      - "2026.04"
+      - "2026.05"
+      - "2026.06"
+      - "2026.07"
+      - "2026.08"
+    unmapped_sheets:
+      竟对分析: 竞对中标率聚合分析（聚合统计，非项目台账）
+      2025.01分析: 竞对中标率聚合分析（聚合统计，非项目台账）
+      2025.02分析: 竞对中标率聚合分析（聚合统计，非项目台账）
+      2025.03分析: 竞对中标率聚合分析（聚合统计，非项目台账）
+      2026.8汇总: 月度汇总（多段无表头区域，结构不固定）
+      2025.09汇总: 月度汇总（多段无表头区域，结构不固定）
+    fields:
+      序号:                 {target: meta.row_serial, kind: fact, status: confirmed}
+      # ⚠️「公司名称」是纵向合并单元格：整组只有首行有值（如 B3:B11），
+      #    Connector 会用 xlsx 真实合并区域向下填充；**2026.07 有 25 行没有合并也没值，
+      #    这些行的竞对归属无法确定，属真实数据缺陷，需业务补全（绝不猜）。**
+      公司名称:             {target: entities.competitor, kind: fact, entity: competitor, status: confirmed}
+      投递项目名称:         {target: projects.name, kind: fact, required: true, status: confirmed}
+      项目类型:             {target: meta.business_category, kind: fact, status: 待业务确认}  # 值为「机关/企业/劳务外包/保洁外包」，口径不统一
+      是否中标:             {target: results.result, kind: fact, status: confirmed}
+      招采时间:             {target: meta.open_bid_at, kind: fact, status: confirmed}  # 格式不统一：裸序列号 45835 与文本「2026.8.25」混用
+      项目地点:             {target: meta.project_address, kind: fact, status: 待业务确认}
+      服务期限:             {target: projects.service_term_months, kind: fact, status: confirmed}
+      中标单位:             {target: results.winner, kind: fact, status: confirmed}   # 不设 entity：否则会把「我司中标」误判成竞对
+      中标金额:             {target: results.winning_price, kind: fact, status: 待业务确认}  # 单位严重混乱：88.3万元 / 0.0672 / 不含税合价:2676571.00元
+      项目金额:             {target: projects.budget, kind: fact, status: 待业务确认}  # 真值是「采购不含税总预算：5660.51万元」这类描述文本
+      "项目金额\n（限价）":  {target: projects.budget, kind: fact, status: 待业务确认}  # 2026.01/02 的列名变体（含换行）
+      岗位类型:             {target: meta.position_type, kind: fact, status: confirmed}
+      甲方名称:             {target: projects.client_name, kind: fact, entity: client, status: confirmed}
+      招标平台:             {target: meta.platform, kind: fact, status: confirmed}
+      公告连接:             {target: meta.source_url, kind: fact, status: confirmed}
+
+  # ══ 4. 盲投渠道 / 重点关注企业（Phase 1 优先级 4-6：渠道、台账）══
+  - source_id: blind_bid_channel
+    name: 盲投渠道表及重点关注企业
+    file: 盲投渠道表及重点关注企业8.14.xlsx
+    header_row: 2
+    header_row_confirmed: true     # 第 1 行是「盲投项目渠道汇总表」/「重点关注企业名单」
+    entity_type_hint: agency
+    trust_level: internal
+    # 渠道表 / 重点关注企业清单不是项目表：只产出实体 + Source Pointer，不套项目主表
+    record_type: entity
+    status: confirmed
+    sheets:
+      - "盲投渠道表"
+      - "重点关注企业"
+    unmapped_sheets:
+      盲投关键词: 盲投筛选关键词清单（筛选规则配置，非项目/实体数据）
+    fields:
+      序号:                 {target: meta.row_serial, kind: fact, status: confirmed}
+      # 信息渠道（采招网 / 四川政府采购网…）是「平台」，不是招标代理机构。
+      # 但 entities.entity_type 只允许 client/competitor/agency/company，
+      # 暂按 agency 落库，是否要新增 platform 类型由业务确认。
+      信息渠道:             {target: entities.agency, kind: fact, entity: agency, status: 待业务确认}
+      网址:                 {target: meta.source_url, kind: fact, status: confirmed}
+      筛选频率:             {target: meta.screening_frequency, kind: fact, status: confirmed}  # 值为「高（一天一次）」
+      # 🚨 安全红线：这两列是真表里的**明文账号 / 明文密码**。
+      #    一律不入库、不进 metadata、不落日志；本配置用 forbidden 类型显式拦下。
+      账号:                 {target: meta.credential_do_not_store, kind: fact, status: 禁止入库}
+      密码:                 {target: meta.credential_do_not_store, kind: fact, status: 禁止入库}
+      区域:                 {target: meta.region, kind: fact, status: confirmed}
+      企业名称:             {target: entities.client, kind: fact, entity: client, status: confirmed}
+      分类:                 {target: meta.category, kind: fact, status: confirmed}
+      关键词:               {target: meta.keyword, kind: fact, status: confirmed}
+
+  # ══ 6. 意向企业关注名单（T2：客户金字塔中层——在谈意向+分公司告警路由）══
+  - source_id: intent_client_watchlist
+    name: 意向企业关注名单
+    file: 意向企业关注名单2.9.xlsx
+    optional: true                 # 常与主台账不同目录；单目录联合导入时按约定跳过
+    header_row: 2                  # 第 1 行是「意向企业名单」标题，第 2 行才是表头
+    header_row_confirmed: true
+    entity_type_hint: client
+    trust_level: internal
+    record_type: entity
+    status: confirmed
+    # 🚨 红线：「客户联系方式」列含具名联系人电话，禁止入库（连 metadata 也不放）
+    entity_meta_fields:            # 白名单：随实体落 entities.metadata 的路由/溯源字段
+      - website
+      - procurement_portal_name
+      - procurement_portal_url
+      - past_procurement_notes
+      - address
+      - industry_scope
+      - alert_route
+    fields:
+      序号:            {target: meta.row_serial, kind: fact, status: confirmed}
+      企业名称:        {target: entities.client, kind: fact, entity: client, status: confirmed}
+      官网:            {target: meta.website, kind: fact, status: confirmed}
+      招采平台名称:    {target: meta.procurement_portal_name, kind: fact, status: confirmed}
+      招采平台链接:    {target: meta.procurement_portal_url, kind: fact, status: confirmed}
+      过往招采信息:    {target: meta.past_procurement_notes, kind: fact, status: confirmed}
+      客户联系方式:    {target: meta.contact_do_not_store, kind: fact, status: 禁止入库}
+      地址:            {target: meta.address, kind: fact, status: confirmed}
+      行业/经营范围:   {target: meta.industry_scope, kind: fact, status: confirmed}
+      意向跟进单位:    {target: meta.alert_route, kind: fact, status: confirmed}
+
+  # ══ 5. 投标项目汇总（主台账：项目/结果/保证金/到期日期都在这里）══
+  - source_id: bid_total_ledger
+    name: 投标项目汇总（主台账）
+    file: 投标项目汇总9.17.xlsx
+    header_row: 2
+    header_row_confirmed: true     # 多数 Sheet 第 1 行是标题，第 2 行才是表头
+    entity_type_hint: client
+    trust_level: internal
+    record_type: project
+    status: confirmed
+    # ⚠️ 同一个文件里表头行不统一：下面两个 Sheet 第 1 行就是表头（没有标题行）
+    sheet_header_rows:
+      "2025年未参与 ": 1
+      "26年盲投中标项目": 1
+    sheets:
+      - "2023年"
+      - "2024年"
+      - "2025年"
+      - "2026年"
+      - "26年盲投中标项目"
+      - "入库项目台账"
+      - "2025年未参与 "
+      - "26年投标保证金 "
+      - "25年投标保证金"
+      - "投标保证金 未退回跟进"
+      - "履约保证金"
+    unmapped_sheets:
+      # 2026-09-30 自动同步实测：现版 9.17 文件已无此 Sheet（09-28 导入的数据仍在库，
+      # 不丢失）。若同事恢复该 Sheet，请把它挪回上面 sheets 列表，否则变更不会入库。
+      "2026年未参与 ": 现版 9.17 文件已移除该 Sheet，登记会导致整批导入失败
+      "26年盲投中标项目 运营单位": 「26年盲投中标项目」的无表头 14 列投影（第 1 行即数据），导入会重复计数
+      # 数据质量整改（2026-09-24 事故）：该 Sheet 名虽叫「未中标项目」，
+      # 但实测整张表**只有 17 行（R107~R173）且 17/17 全是复盘分析文本**：
+      # 分析表头（核心差异 / 业务领域优势 / 建议类别）、分析结论句
+      # （「成都项目基数大，宜宾项目集中度高」）、以及「1. 2. 3.」编号的
+      # 竞对画像与战略建议。它不是项目清单，导入会造出「双核心市场战略」
+      # 「市场准入评估机制」这类假项目并渲染到竞对分析页。
+      "未中标项目": 该 Sheet 实为竞对复盘/战略分析表（实测 17 行全为分析文本，非项目清单），已停用导入
+    fields:
+      序号:                 {target: meta.row_serial, kind: fact, status: confirmed}
+      年份:                 {target: meta.year, kind: fact, status: confirmed}
+      月份:                 {target: meta.month, kind: fact, status: confirmed}
+      所属公司:             {target: entities.company, kind: fact, entity: company, status: 待业务确认}  # 值为「重庆/保安/市场/双流/郫都/龙泉/宜宾/广元」，是业务片区而非公司主体
+      项目类型:             {target: meta.business_category, kind: fact, status: 待业务确认}  # 2025年/2026年 里是「企业/机关/保安」
+      项目类型_2:           {target: meta.procurement_method, kind: fact, status: 待业务确认}  # 同名重复列，值是「公开/询价/竞标/比选/谈判/磋商」
+      项目情况:             {target: meta.project_scenario, kind: human, status: confirmed}
+      开标时间:             {target: meta.open_bid_at, kind: fact, status: confirmed}   # 裸 Excel 序列号，必须转 datetime
+      项目名称:             {target: projects.name, kind: fact, required: true, status: confirmed}
+      甲方名称:             {target: projects.client_name, kind: fact, entity: client, status: confirmed}
+      代理机构:             {target: entities.agency, kind: fact, entity: agency, status: confirmed}
+      参与单位:             {target: meta.participating_entity, kind: fact, status: 待业务确认}  # 值含「未参与」，不是纯实体列；是否建实体需业务确认
+      报名费（元）:         {target: meta.registration_fee, kind: fact, status: confirmed}
+      打印费（元）:         {target: meta.print_fee, kind: fact, status: confirmed}
+      资料份数:             {target: meta.bid_doc_copies, kind: fact, status: confirmed}
+      是否中标:             {target: results.result, kind: fact, status: confirmed}
+      是否踏勘:             {target: meta.survey_required, kind: fact, status: confirmed}
+      中标单位:             {target: results.winner, kind: fact, status: confirmed}
+      限价:                 {target: projects.budget, kind: fact, status: 待业务确认}
+      限价(万元):           {target: projects.budget, kind: fact, status: 待业务确认}
+      限价（万元）:         {target: projects.budget, kind: fact, status: 待业务确认}
+      中标价格:             {target: results.winning_price, kind: fact, status: 待业务确认}
+      中标金额（万元）:     {target: results.winning_price, kind: fact, status: 待业务确认}  # 单位混乱
+      中标金额:             {target: results.winning_price, kind: fact, status: 待业务确认}
+      折扣率:               {target: results.discount_rate, kind: fact, status: confirmed}
+      报价类型:             {target: meta.quote_type, kind: fact, status: confirmed}
+      人数:                 {target: meta.headcount, kind: fact, status: confirmed}
+      管理费（元/人/月）:   {target: meta.management_fee, kind: fact, status: confirmed}
+      单人管理费（元/人/月）: {target: meta.management_fee, kind: fact, status: confirmed}
+      预估总价（万元）:     {target: meta.estimated_total, kind: fact, status: confirmed}
+      # ── 保证金（Phase 1 优先级：保证金台账；bid_bond_ledger 的唯一真实来源）──
+      投标保证金（元）:     {target: bonds.amount, kind: fact, status: confirmed}   # 真值含「5760*3」这类算式，解析不出金额时按 0 占位并标 amount_missing
+      履约保证金（万元）:   {target: meta.performance_bond, kind: fact, status: confirmed}  # 履约保证金 ≠ 投标保证金，不进 bid_bond_ledger
+      退回情况:             {target: bonds.status, kind: fact, status: 待业务确认}   # 真值「已退回/已退回到账10.13/财务已确认缴纳」，带日期的信息会丢，需业务确认口径
+      预计时间:             {target: meta.refund_expected_note, kind: fact, status: 待业务确认}  # 真值是「节前/节后」，不是日期，不能写 expected_refund_at
+      跟进人:               {target: meta.follow_up_owner, kind: fact, status: confirmed}
+      中标服务费（元）:     {target: meta.win_service_fee, kind: fact, status: confirmed}
+      服务期限:             {target: projects.service_term_months, kind: fact, status: confirmed}
+      标书负责情况:         {target: meta.book_owner, kind: fact, status: confirmed}
+      系统录入:             {target: meta.system_entered, kind: fact, status: confirmed}
+      盲投排名:             {target: meta.blind_bid_rank, kind: fact, status: confirmed}
+      报价评分:             {target: meta.quote_score, kind: fact, status: confirmed}
+      # ── 入库项目台账：项目结束日期（90 天到期提醒的唯一可靠来源）──
+      合同签订时间:         {target: meta.contract_signed_at, kind: fact, status: 待业务确认}  # ⚠️ 不等于服务开始日期，未确认前**不参与**结束日期推算
+      到期日期:             {target: projects.project_end_at, kind: fact, status: confirmed}  # 列名含「到期日」→ 判定为 exact（明确日期），不是 estimated
+      # ── 未参与 / 未中标 专用 ──
+      未参与原因:           {target: meta.not_participate_reason, kind: human, status: confirmed}
+    # 同名列在不同 Sheet 语义不同：这两个 Sheet 只有一列「项目类型」，且值是采购方式
+    sheet_fields:
+      "2023年":
+        项目类型: {target: meta.procurement_method, kind: fact, status: 待业务确认}
+      "2024年":
+        项目类型: {target: meta.procurement_method, kind: fact, status: 待业务确认}
+
+# ─────────────────────────────────────────────────────────────
+# 五、Source Pointer 规则（数据字典 ⑧ 项）
+#     Excel 不支持 URL 精确跳单元格 → 只保存 Sheet + 行号 + 单元格范围 + 原文片段，
+#     UI 显示定位文字，绝不伪造链接（FAILURE_MODES §4）。
+# ─────────────────────────────────────────────────────────────
+source_pointer:
+  source_type: sheet
+  trust_level: internal
+  row_id_format: "{row}"                 # location_label 会渲染成「第N行/记录」
+  cell_range_format: "{first_col}{row}:{last_col}{row}"
+  content_hash_algo: sha256
+  original_text_max_len: 800
+  project_id_rule: "bidos_proj_<sha1(normalize(name)+'|'+normalize(client_name))[:16]>"
+  entity_id_rule: "bidos_ent_<sha1(normalize(canonical_name)+'|'+entity_type)[:16]>"
+  source_object_id_rule: "bidos_src_<sha1(source_id+'|'+external_id)[:16]>"
+  pointer_id_rule: "bidos_ptr_<sha1(source_object_id+'|'+sheet_name+'|'+row)[:16]>"
+
+# ─────────────────────────────────────────────────────────────
+# 六、日期 / 金额 / 服务期限解析规则（确定性规则，不用 LLM 算日期）
+# ─────────────────────────────────────────────────────────────
+parsing:
+  date_formats: ["%Y-%m-%d", "%Y/%m/%d", "%Y.%m.%d", "%Y年%m月%d日", "%Y-%m-%d %H:%M", "%Y/%m/%d %H:%M"]
+  money_units:
+    元: 1
+    万元: 10000
+    万: 10000
+    亿元: 100000000
+    亿: 100000000
+  duration_units:
+    年: 12
+    个月: 1
+    月: 1
+    天: 0.0333
+  # 仅当「服务期限 + 已确认开始日期」同时存在时才推算结束日期，且 kind=estimated
+  end_date_kind_rules:
+    explicit_contract_or_award_date: exact
+    service_term_plus_confirmed_start: estimated
+    manual_entry: manual

@@ -1,0 +1,3621 @@
+{
+ "version": "2026-10-09",
+ "generatedAt": "2026-10-09T19:31:52.150020+08:00",
+ "generatedBy": "deliverables/blind-channel-coverage-20261009/evidence/build_strategies.py",
+ "sourceEvidence": [
+  "probe-result.json",
+  "discovery-result.json",
+  "render-result.json"
+ ],
+ "rules": {
+  "verified": "实测抓到带日期公告且最新一条 ≤7 天，才标 verified",
+  "tls": "relaxed 仅用于证书链不合规的站（不用于绕过反爬）",
+  "noBypass": "验证码 / 登录墙一律不绕过，交人工（合规红线）",
+  "datePolicy": "同一行既有发布日又有截止日时，取不晚于今天的最新日期，避免把截止时间当发布时间"
+ },
+ "byStatus": {
+  "verified": 48,
+  "list_ok": 23,
+  "manual": 16,
+  "no_listing": 11,
+  "blocked": 6,
+  "render_only": 4,
+  "unreachable": 1
+ },
+ "channels": [
+  {
+   "name": "采招网",
+   "url": "https://www.bidcenter.com.cn/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://www.bidcenter.com.cn/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 77,
+   "newest": "2026-10-09",
+   "within7d": 59,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:21.129303+08:00",
+   "seq": 1,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:21.129325+08:00",
+    "replay": "strict",
+    "replayItems": 77,
+    "ok": true,
+    "error": "",
+    "ms": 130
+   }
+  },
+  {
+   "name": "四川政府采购网",
+   "url": "https://www.ccgp-sichuan.gov.cn/",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://www.ccgp-sichuan.gov.cn/gpcms/rest/web/v2/info/selectInfoMoreChannel?siteId=94c965cc-c55d-4f92-8469-d5875c68bd04&channel=c5bff13f-21ca-4dac-b158-cb40accd3035&currPage=1&pageSize=10&noticeType=59&regionCode=510001&cityOrArea=&_t=1791544962656",
+   "extract": "json",
+   "tls": "strict",
+   "items": 10,
+   "newest": "2026-10-09",
+   "within7d": 10,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:21.260084+08:00",
+   "apiCall": {
+    "url": "https://www.ccgp-sichuan.gov.cn/gpcms/rest/web/v2/info/selectInfoMoreChannel?siteId=94c965cc-c55d-4f92-8469-d5875c68bd04&channel=c5bff13f-21ca-4dac-b158-cb40accd3035&currPage=1&pageSize=10&noticeType=59&regionCode=510001&cityOrArea=&_t=1791544962656",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "data.rows",
+    "candidates": [
+     {
+      "url": "https://www.ccgp-sichuan.gov.cn/gpcms/rest/web/v2/info/selectInfoMoreChannel?siteId=94c965cc-c55d-4f92-8469-d5875c68bd04&channel=c5bff13f-21ca-4dac-b158-cb40accd3035&currPage=1&pageSize=10&noticeType=59&regionCode=510001&cityOrArea=&_t=1791544962656",
+      "method": "GET",
+      "recordsPath": "data.rows",
+      "items": 10
+     },
+     {
+      "url": "https://www.ccgp-sichuan.gov.cn/gpcms/rest/web/v2/info/selectInfoMoreChannel?siteId=94c965cc-c55d-4f92-8469-d5875c68bd04&channel=0df9d47e-c210-4176-bce9-ead9845bf311&currPage=1&pageSize=8&regionCode=510001&cityOrArea=&_t=1791544962685",
+      "method": "GET",
+      "recordsPath": "data.rows",
+      "items": 8
+     },
+     {
+      "url": "https://www.ccgp-sichuan.gov.cn/gpcms/rest/web/v2/info/selectInfoMoreChannel?siteId=94c965cc-c55d-4f92-8469-d5875c68bd04&channel=c5bff13f-21ca-4dac-b158-cb40accd3035&currPage=1&pageSize=8&noticeType=00101&regionCode=510001&cityOrArea=&_t=1791544962673",
+      "method": "GET",
+      "recordsPath": "data.rows",
+      "items": 8
+     },
+     {
+      "url": "https://www.ccgp-sichuan.gov.cn/gpcms/rest/web/v2/info/selectInfoMoreChannel?siteId=94c965cc-c55d-4f92-8469-d5875c68bd04&channel=af39a1a6-1253-49fb-939e-cb929b7f5cd7&regionCode=510001&_t=1791544962523",
+      "method": "GET",
+      "recordsPath": "data.rows",
+      "items": 10
+     },
+     {
+      "url": "https://www.ccgp-sichuan.gov.cn/gpcms/rest/web/v2/info/selectInfoMoreChannel?siteId=94c965cc-c55d-4f92-8469-d5875c68bd04&currPage=1&pageSize=6&regionCode=510001&channel=af39a1a6-1253-49fb-939e-cb929b7f5cd7&_t=1791544962519",
+      "method": "GET",
+      "recordsPath": "data.rows",
+      "items": 6
+     }
+    ]
+   },
+   "firstSample": {
+    "title": "西华师范大学2026年度政府采购意向公告(第31批)",
+    "date": "2026-10-09",
+    "url": "https://www.ccgp-sichuan.gov.cn/gpcms/rest/web/v2/info/selectInfoMoreChannel?siteId=94c965cc-c55d-4f92-8469-d5875c68bd04&channel=c5bff13f-21ca-4dac-b158-cb40accd3035&currPage=1&pageSize=10&noticeType=59&regionCode=510001&cityOrArea=&_t=1791544962656"
+   },
+   "seq": 2,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:21.260098+08:00",
+    "replay": "recordsPath_miss",
+    "replayItems": 0,
+    "ok": false,
+    "error": "",
+    "probe": {
+     "code": "4009",
+     "message": "验签比对失败",
+     "topKeys": [
+      "code",
+      "data",
+      "msg"
+     ]
+    },
+    "ms": 46
+   }
+  },
+  {
+   "name": "中国招标投标公共服务平台",
+   "url": "https://bulletin.cebpubservice.com/",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:21.306916+08:00",
+   "seq": 3,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:21.306929+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "建易采",
+   "url": "https://www.jycjy.com/recruitInformation",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://www.jycjy.com/api/portal/bidnotice/cachelist?_=1791544962512&page=1&pageSize=10&keyName=&areaCode=&pubtime=&portalDataInfoType=&portalDataRecruitment=&portalDataProjectType=&portalDataOrgForm=",
+   "extract": "json",
+   "tls": "strict",
+   "items": 10,
+   "newest": "2026-10-09",
+   "within7d": 10,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:21.306934+08:00",
+   "apiCall": {
+    "url": "https://www.jycjy.com/api/portal/bidnotice/cachelist?_=1791544962512&page=1&pageSize=10&keyName=&areaCode=&pubtime=&portalDataInfoType=&portalDataRecruitment=&portalDataProjectType=&portalDataOrgForm=",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "data",
+    "candidates": [
+     {
+      "url": "https://www.jycjy.com/api/portal/bidnotice/cachelist?_=1791544962512&page=1&pageSize=10&keyName=&areaCode=&pubtime=&portalDataInfoType=&portalDataRecruitment=&portalDataProjectType=&portalDataOrgForm=",
+      "method": "GET",
+      "recordsPath": "data",
+      "items": 10
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "pubtime",
+     "url": "",
+     "id": "id"
+    },
+    "urlBase": "https://www.jycjy.com"
+   },
+   "firstSample": {
+    "title": "飞行区局部围界调整项目施工招标公告",
+    "date": "2026-10-09",
+    "url": "https://www.jycjy.com/api/portal/bidnotice/cachelist?_=1791544962512&page=1&pageSize=10&keyName=&areaCode=&pubtime=&portalDataInfoType=&portalDataRecruitment=&portalDataProjectType=&portalDataOrgForm="
+   },
+   "seq": 4,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:21.306940+08:00",
+    "replay": "",
+    "replayItems": 10,
+    "ok": true,
+    "error": "",
+    "ms": 1935
+   }
+  },
+  {
+   "name": "西南联合产权交易所阳光采购平台",
+   "url": "http://www.swueecg.com/#/index",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:23.242493+08:00",
+   "seq": 5,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:23.242534+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "四川国际招标有限责任公司",
+   "url": "http://sale.scbid.net/home",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:23.242544+08:00",
+   "seq": 6,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:23.242553+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "吉利电子招标平台",
+   "url": "https://glzb.geely.com/#/login",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:23.242564+08:00",
+   "seq": 7,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:23.242571+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "中国一汽电子招标采购交易平台",
+   "url": "https://etp.faw.cn/",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://etp.faw.cn/",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 8,
+   "newest": "2026-09-30",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:23.242587+08:00",
+   "seq": 8,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:23.242627+08:00",
+    "replay": "strict",
+    "replayItems": 8,
+    "ok": true,
+    "error": "",
+    "ms": 995
+   }
+  },
+  {
+   "name": "成都城投招采平台",
+   "url": "http://zcjy.cdci.cn:8081/cdct/",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到3个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:24.238112+08:00",
+   "seq": 9,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:24.238124+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "成都兴城投资集团有限公司",
+   "url": "https://www.cdxctz.com/tender.aspx?t=68",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://www.cdxctz.com/tender.aspx?t=68",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 10,
+   "newest": "2026-10-09",
+   "within7d": 6,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:24.238128+08:00",
+   "seq": 10,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:24.238135+08:00",
+    "replay": "strict",
+    "replayItems": 10,
+    "ok": true,
+    "error": "",
+    "ms": 334
+   }
+  },
+  {
+   "name": "成都天府新区投资集团有限公司",
+   "url": "https://www.cdttjt.com/go-c39.htm",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://www.cdttjt.com/go-c75.htm",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 3,
+   "newest": "2026-10-09",
+   "within7d": 1,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:24.572751+08:00",
+   "seq": 11,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:24.572772+08:00",
+    "replay": "strict",
+    "replayItems": 3,
+    "ok": true,
+    "error": "",
+    "ms": 109
+   }
+  },
+  {
+   "name": "成都文旅（成都文化旅游发展集团有限责任公司）",
+   "url": "https://tpgl.028wlkj.com:9006/aobidding",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://www.cdctg.com/api/ow/zb/cms-bidding/bulletin/page",
+   "extract": "json",
+   "tls": "strict",
+   "items": 10,
+   "newest": "2026-10-09",
+   "within7d": 3,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:24.682257+08:00",
+   "apiCall": {
+    "url": "https://www.cdctg.com/api/ow/zb/cms-bidding/bulletin/page",
+    "method": "POST",
+    "postData": "{\"pageNum\":1,\"pageSize\":10}",
+    "recordsPath": "rows",
+    "candidates": [
+     {
+      "url": "https://www.cdctg.com/api/ow/zb/cms-bidding/bulletin/page",
+      "method": "POST",
+      "recordsPath": "rows",
+      "items": 10
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "publishDate",
+     "url": "",
+     "id": "id"
+    },
+    "urlBase": "https://tpgl.028wlkj.com:9006"
+   },
+   "firstSample": {
+    "title": "成都锦江绿道建设投资集团有限公司上新桥公园及周边区域专项维修工程项目竞争性磋商公告",
+    "date": "2026-10-09",
+    "url": "https://www.cdctg.com/api/ow/zb/cms-bidding/bulletin/page"
+   },
+   "seq": 12,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:24.682274+08:00",
+    "replay": "",
+    "replayItems": 10,
+    "ok": true,
+    "error": "",
+    "ms": 191
+   }
+  },
+  {
+   "name": "蜀道投资集团有限责任公司集中招标采购平台",
+   "url": "https://zb.shudaojt.com/zbgg/zhaobiao.html",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://zb.shudaojt.com/zbgg/zhaobiao.html",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 9,
+   "newest": "2026-08-25",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:24.873667+08:00",
+   "seq": 13,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:24.873698+08:00",
+    "replay": "strict",
+    "replayItems": 9,
+    "ok": true,
+    "error": "",
+    "ms": 56
+   }
+  },
+  {
+   "name": "成都益民投资集团有限公司官网",
+   "url": "https://www.ymtzjt.com",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://www.ymtzjt.com/api/Zhaozu/SelectTopContentByStage",
+   "extract": "json",
+   "tls": "strict",
+   "items": 13,
+   "newest": "2026-10-09",
+   "within7d": 5,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:24.930093+08:00",
+   "apiCall": {
+    "url": "https://www.ymtzjt.com/api/Zhaozu/SelectTopContentByStage",
+    "method": "POST",
+    "postData": "",
+    "recordsPath": "content.Zhaozu",
+    "candidates": [
+     {
+      "url": "https://www.ymtzjt.com/api/Zhaozu/SelectTopContentByStage",
+      "method": "POST",
+      "recordsPath": "content.Zhaozu",
+      "items": 13
+     }
+    ]
+   },
+   "firstSample": {
+    "title": "成都市蓉海社区项目投资管理有限公司资产出租公告(成交竞告〔2026〕862号)",
+    "date": "2026-10-08",
+    "url": "https://www.ymtzjt.com/api/Zhaozu/SelectTopContentByStage"
+   },
+   "seq": 14,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:24.930116+08:00",
+    "replay": "recordsPath_miss",
+    "replayItems": 0,
+    "ok": false,
+    "error": "",
+    "probe": {
+     "code": "400",
+     "message": "无权限",
+     "topKeys": [
+      "code",
+      "content",
+      "msg"
+     ]
+    },
+    "ms": 69
+   }
+  },
+  {
+   "name": "宜宾企业阳光采购服务平台",
+   "url": "https://ybqyygcgfwpt.com/web-portal/#/home",
+   "status": "list_ok",
+   "transport": "json",
+   "list_url": "https://ybqyygcgfwpt.com/api/truelore-business-support/noauth/matrix/getAllByType?type=0",
+   "extract": "json",
+   "tls": "strict",
+   "items": 3,
+   "newest": "2026-01-30",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:24.999897+08:00",
+   "apiCall": {
+    "url": "https://ybqyygcgfwpt.com/api/truelore-business-support/noauth/matrix/getAllByType?type=0",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "data.list",
+    "candidates": [
+     {
+      "url": "https://ybqyygcgfwpt.com/api/truelore-business-support/noauth/matrix/getAllByType?type=0",
+      "method": "GET",
+      "recordsPath": "data.list",
+      "items": 3
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "",
+     "url": "pictureUrl",
+     "id": "id"
+    },
+    "urlBase": "https://ybqyygcgfwpt.com"
+   },
+   "firstSample": {
+    "title": "中国招标投标公共服务平台",
+    "date": "2026-01-30",
+    "url": "https://ybqyygcgfwpt.com/api/truelore-business-support/noauth/matrix/getAllByType?type=0"
+   },
+   "seq": 15,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:24.999931+08:00",
+    "replay": "",
+    "replayItems": 4,
+    "ok": true,
+    "error": "",
+    "ms": 153
+   }
+  },
+  {
+   "name": "雅安阳光采购服务平台",
+   "url": "https://yaan.tfygcgfw.com/",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://yaan.tfygcgfw.com/web/website/listInformations?types=1&pageNumber=0&pageSize=6",
+   "extract": "json",
+   "tls": "strict",
+   "items": 5,
+   "newest": "2026-10-08",
+   "within7d": 1,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:25.153061+08:00",
+   "apiCall": {
+    "url": "https://yaan.tfygcgfw.com/web/website/listInformations?types=1&pageNumber=0&pageSize=6",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "data.content",
+    "candidates": [
+     {
+      "url": "https://yaan.tfygcgfw.com/web/website/listInformations?types=1&pageNumber=0&pageSize=6",
+      "method": "GET",
+      "recordsPath": "data.content",
+      "items": 5
+     },
+     {
+      "url": "https://yaan.tfygcgfw.com/supplier/tender/search/tenderDoc?page=1&rows=5&classify&isExternal=0&type=1,11",
+      "method": "GET",
+      "recordsPath": "data.data",
+      "items": 5
+     },
+     {
+      "url": "https://yaan.tfygcgfw.com/supplier/tender/search/tenderDoc?page=1&rows=5&classify&isExternal=0&type=7,12",
+      "method": "GET",
+      "recordsPath": "data.data",
+      "items": 4
+     },
+     {
+      "url": "https://yaan.tfygcgfw.com/supplier/tender/search/tenderDoc?page=1&rows=5&classify&isExternal=0&type=3,4,5,10",
+      "method": "GET",
+      "recordsPath": "data.data",
+      "items": 2
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "issueDate",
+     "url": "source",
+     "id": ""
+    },
+    "urlBase": "https://yaan.tfygcgfw.com"
+   },
+   "firstSample": {
+    "title": "雅安交建科创投资基金(有限合伙)选聘基金管理人第三次征集公告",
+    "date": "2026-10-08",
+    "url": "https://yaan.tfygcgfw.com/web/website/listInformations?types=1&pageNumber=0&pageSize=6"
+   },
+   "seq": 16,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:25.153098+08:00",
+    "replay": "",
+    "replayItems": 6,
+    "ok": true,
+    "error": "",
+    "ms": 93
+   }
+  },
+  {
+   "name": "内江市国有企业阳光采购服务平台",
+   "url": "https://www.njgqygcg.com/#/",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://www.njgqygcg.com/api/notice/foreign/other/page",
+   "extract": "json",
+   "tls": "strict",
+   "items": 10,
+   "newest": "2026-10-09",
+   "within7d": 4,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:25.246812+08:00",
+   "apiCall": {
+    "url": "https://www.njgqygcg.com/api/notice/foreign/other/page",
+    "method": "POST",
+    "postData": "{\"noticeType\":0,\"pageNum\":1,\"pageSize\":10}",
+    "recordsPath": "data.records",
+    "candidates": [
+     {
+      "url": "https://www.njgqygcg.com/api/notice/foreign/other/page",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 10
+     },
+     {
+      "url": "https://www.njgqygcg.com/api/notice/foreign/page?time=1791544985695",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 10
+     },
+     {
+      "url": "https://www.njgqygcg.com/api/notice/foreign/page",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 1
+     },
+     {
+      "url": "https://www.njgqygcg.com/api/info/foreign/page",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 5
+     },
+     {
+      "url": "https://www.njgqygcg.com/api/info/foreign/page",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 4
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "publishTime",
+     "url": "",
+     "id": "id"
+    },
+    "urlBase": "https://www.njgqygcg.com"
+   },
+   "firstSample": {
+    "title": "威远县农村供水一体化项目保障公路、公路附属设施质量和安全技术评价报告编制单位采购 采购公告",
+    "date": "2026-10-09",
+    "url": "https://www.njgqygcg.com/api/notice/foreign/other/page"
+   },
+   "seq": 17,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:25.246852+08:00",
+    "replay": "",
+    "replayItems": 10,
+    "ok": true,
+    "error": "",
+    "ms": 178
+   }
+  },
+  {
+   "name": "南方数字供应链",
+   "url": "https://www.cse-ssc.com/",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:25.425609+08:00",
+   "seq": 18,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:25.425635+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "眉山县属国有企业物资（服务）采购平台",
+   "url": "https://www.rsgqcg.com/002/electronicBidding.html",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://www.rsgqcg.com/002/electronicBidding.html",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 12,
+   "newest": "2026-09-30",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:25.425644+08:00",
+   "seq": 19,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:25.425653+08:00",
+    "replay": "strict",
+    "replayItems": 12,
+    "ok": true,
+    "error": "",
+    "ms": 128
+   }
+  },
+  {
+   "name": "雅安市名山区茗投产业集团有限公司招标采购平台",
+   "url": "https://kyzc.mdskyy.cn/",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://kyzc.mdskyy.cn/prod-api/bid/api/tdproject/all/publicitys/win?categoryIds=543492226487951364&categoryIds=153696063194112&categoryIds=543492966799384581&categoryIds=153699267642368&categoryIds=153703138984960&categoryIds=153703373865984&categoryIds=153696889472000&categoryIds=153697732527104&categoryIds=153698198094848&categoryIds=153699045344256&categoryIds=153555889472000&categoryIds=111111111111117&categoryIds=111111111111129&categoryIds=707299383648985092&categoryIds=692406056998936580&categoryIds=560050835816456197&categoryIds=550314549710954497&categoryIds=715898197590941700&categoryIds=543492437356584965&categoryIds=724555185354973188&categoryIds=724556320912449539&categoryIds=543492508429066242&categoryIds=724556521182076929&categoryIds=543492592038322181&categoryIds=543492650775355397&categoryIds=543492692651286532&categoryIds=543492756064968709&categoryIds=153666889472000&categoryIds=543492817532493829&categoryIds=543492898167988229&categoryIds=111111111111123&categoryIds=163700098991122&isAll=1",
+   "extract": "json",
+   "tls": "strict",
+   "items": 56,
+   "newest": "2026-10-09",
+   "within7d": 2,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:25.554298+08:00",
+   "apiCall": {
+    "url": "https://kyzc.mdskyy.cn/prod-api/bid/api/tdproject/all/publicitys/win?categoryIds=543492226487951364&categoryIds=153696063194112&categoryIds=543492966799384581&categoryIds=153699267642368&categoryIds=153703138984960&categoryIds=153703373865984&categoryIds=153696889472000&categoryIds=153697732527104&categoryIds=153698198094848&categoryIds=153699045344256&categoryIds=153555889472000&categoryIds=111111111111117&categoryIds=111111111111129&categoryIds=707299383648985092&categoryIds=692406056998936580&categoryIds=560050835816456197&categoryIds=550314549710954497&categoryIds=715898197590941700&categoryIds=543492437356584965&categoryIds=724555185354973188&categoryIds=724556320912449539&categoryIds=543492508429066242&categoryIds=724556521182076929&categoryIds=543492592038322181&categoryIds=543492650775355397&categoryIds=543492692651286532&categoryIds=543492756064968709&categoryIds=153666889472000&categoryIds=543492817532493829&categoryIds=543492898167988229&categoryIds=111111111111123&categoryIds=163700098991122&isAll=1",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "data",
+    "candidates": [
+     {
+      "url": "https://kyzc.mdskyy.cn/prod-api/bid/api/tdproject/all/publicitys/win?categoryIds=543492226487951364&categoryIds=153696063194112&categoryIds=543492966799384581&categoryIds=153699267642368&categoryIds=153703138984960&categoryIds=153703373865984&categoryIds=153696889472000&categoryIds=153697732527104&categoryIds=153698198094848&categoryIds=153699045344256&categoryIds=153555889472000&categoryIds=111111111111117&categoryIds=111111111111129&categoryIds=707299383648985092&categoryIds=692406056998936580&categoryIds=560050835816456197&categoryIds=550314549710954497&categoryIds=715898197590941700&categoryIds=543492437356584965&categoryIds=724555185354973188&categoryIds=724556320912449539&categoryIds=543492508429066242&categoryIds=724556521182076929&categoryIds=543492592038322181&categoryIds=543492650775355397&categoryIds=543492692651286532&categoryIds=543492756064968709&categoryIds=153666889472000&categoryIds=543492817532493829&categoryIds=543492898167988229&categoryIds=111111111111123&categoryIds=163700098991122&isAll=1",
+      "method": "GET",
+      "recordsPath": "data",
+      "items": 56
+     },
+     {
+      "url": "https://kyzc.mdskyy.cn/prod-api/bid/api/tdproject/all/publicitys/getlatestdeal?categoryIds=&pageSize=10&pageNum=1",
+      "method": "GET",
+      "recordsPath": "data.list",
+      "items": 3
+     },
+     {
+      "url": "https://kyzc.mdskyy.cn/prod-api/bid/api/tdproject/get/announcement?status=2&keyword=",
+      "method": "GET",
+      "recordsPath": "data",
+      "items": 37
+     },
+     {
+      "url": "https://kyzc.mdskyy.cn/prod-api/bid/api/tdproject/all/publicity?categoryIds=543492226487951364&categoryIds=153696063194112&categoryIds=543492966799384581&categoryIds=153699267642368&categoryIds=153703138984960&categoryIds=153703373865984&categoryIds=153696889472000&categoryIds=153697732527104&categoryIds=153698198094848&categoryIds=153699045344256&categoryIds=153555889472000&categoryIds=111111111111117&categoryIds=111111111111129&categoryIds=707299383648985092&categoryIds=692406056998936580&categoryIds=560050835816456197&categoryIds=550314549710954497&categoryIds=715898197590941700&categoryIds=543492437356584965&categoryIds=724555185354973188&categoryIds=724556320912449539&categoryIds=543492508429066242&categoryIds=724556521182076929&categoryIds=543492592038322181&categoryIds=543492650775355397&categoryIds=543492692651286532&categoryIds=543492756064968709&categoryIds=153666889472000&categoryIds=543492817532493829&categoryIds=543492898167988229&categoryIds=111111111111123&categoryIds=163700098991122&isAll=1",
+      "method": "GET",
+      "recordsPath": "data",
+      "items": 19
+     }
+    ],
+    "recordMap": {
+     "title": "project_name",
+     "date": "publicity_starttime",
+     "url": "",
+     "id": "id"
+    },
+    "urlBase": "https://kyzc.mdskyy.cn"
+   },
+   "firstSample": {
+    "title": "雅安市名山区名山河流域闵家碥至云翔纸业段综合治理项目(一期)-龙兴酒厂片区一标段总坪工程专业分包项目--总坪景观灯具及弱电材料采购（含安装）",
+    "date": "2026-10-09",
+    "url": "https://kyzc.mdskyy.cn/prod-api/bid/api/tdproject/all/publicitys/win?categoryIds=543492226487951364&categoryIds=153696063194112&categoryIds=543492966799384581&categoryIds=153699267642368&categoryIds=153703138984960&categoryIds=153703373865984&categoryIds=153696889472000&categoryIds=153697732527104&categoryIds=153698198094848&categoryIds=153699045344256&categoryIds=153555889472000&categoryIds=111111111111117&categoryIds=111111111111129&categoryIds=707299383648985092&categoryIds=692406056998936580&categoryIds=560050835816456197&categoryIds=550314549710954497&categoryIds=715898197590941700&categoryIds=543492437356584965&categoryIds=724555185354973188&categoryIds=724556320912449539&categoryIds=543492508429066242&categoryIds=724556521182076929&categoryIds=543492592038322181&categoryIds=543492650775355397&categoryIds=543492692651286532&categoryIds=543492756064968709&categoryIds=153666889472000&categoryIds=543492817532493829&categoryIds=543492898167988229&categoryIds=111111111111123&categoryIds=163700098991122&isAll=1"
+   },
+   "seq": 20,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:25.554327+08:00",
+    "replay": "",
+    "replayItems": 65,
+    "ok": true,
+    "error": "",
+    "ms": 517
+   }
+  },
+  {
+   "name": "八戒八采（重庆）",
+   "url": "https://cg.zbj.com/",
+   "status": "render_only",
+   "transport": "render",
+   "list_url": "https://cg.zbj.com/",
+   "extract": "dom",
+   "tls": "strict",
+   "items": 12,
+   "newest": "2026-10-08",
+   "within7d": 4,
+   "note": "仅浏览器渲染可取到列表（复验标注 needs_browser）",
+   "checkedAt": "2026-10-09T19:31:26.072274+08:00",
+   "firstSample": {
+    "title": "扬州市生态环境监测监控中心试剂耗材采购项目C包（二次）(第2次) ￥1.00 其他服务 发布时间 2026-09-24 采购单位 扬州市生态环境监测监控中心 单位属地 广陵区 报名中 距结束 4 时 35 分 46 秒",
+    "date": "2026-09-24",
+    "url": "https://cg.zbj.com/detailsDemand?id=6143226484734ef087caec0b6ed4048b"
+   },
+   "seq": 21,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:26.072307+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "国家电网",
+   "url": "https://ecp.sgcc.com.cn/ecp2.0/portal/#/",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://ecp.sgcc.com.cn/ecp2.0/ecpwcmcore//index/firstPage/tabList?lh6RWoWu=0CnLYWqlqEi4oR2ucJPiKXyh75Lzkw7.GHVfiPMG5iVDh.6p8VS3REkirTRr8jbwgBBekjsJhdFJHHIn2.8M98n__X1VwzU8z",
+   "extract": "json",
+   "tls": "strict",
+   "items": 20,
+   "newest": "2026-10-09",
+   "within7d": 20,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:26.072320+08:00",
+   "apiCall": {
+    "url": "https://ecp.sgcc.com.cn/ecp2.0/ecpwcmcore//index/firstPage/tabList?lh6RWoWu=0CnLYWqlqEi4oR2ucJPiKXyh75Lzkw7.GHVfiPMG5iVDh.6p8VS3REkirTRr8jbwgBBekjsJhdFJHHIn2.8M98n__X1VwzU8z",
+    "method": "POST",
+    "postData": "{\"index\":1,\"size\":20,\"firstPageMenuId\":20180502001}",
+    "recordsPath": "resultValue.noteList",
+    "candidates": [
+     {
+      "url": "https://ecp.sgcc.com.cn/ecp2.0/ecpwcmcore//index/firstPage/tabList?lh6RWoWu=0CnLYWqlqEi4oR2ucJPiKXyh75Lzkw7.GHVfiPMG5iVDh.6p8VS3REkirTRr8jbwgBBekjsJhdFJHHIn2.8M98n__X1VwzU8z",
+      "method": "POST",
+      "recordsPath": "resultValue.noteList",
+      "items": 20
+     },
+     {
+      "url": "https://ecp.sgcc.com.cn/ecp2.0/ecpwcmcore//index/firstPage/etpList?lh6RWoWu=0bKO9qqlqEi4oR2ucJPiKXyh75Lzkw7.GHVfiPMG5iVDh.6p8VS3REti7TBWwNxpQ3RcFxaQ81GWqwWqAegdJxheMverruYYN",
+      "method": "POST",
+      "recordsPath": "resultValue.noteList",
+      "items": 17
+     },
+     {
+      "url": "https://ecp.sgcc.com.cn/ecp2.0/ecpwcmcore//index/firstPage/noticeItemList?lh6RWoWu=0xOoV4AlqEi4oR2ucJPiKXyh75Lzkw7.GHVfiPMG5iVDh.6p8VS3REJaGGhsVvjP.QEGwT_ccdpGiygBME.S61u.IRwmEYsiZ",
+      "method": "POST",
+      "recordsPath": "resultValue.noticeItemList",
+      "items": 10
+     },
+     {
+      "url": "https://ecp.sgcc.com.cn/ecp2.0/ecpwcmcore//index/firstPage/tabListGJ?lh6RWoWu=0JMpu_GlqEi4oR2ucJPiKXyh75Lzkw7.GHVfiPMG5iVDh.6p8VS3REqunoVkZEXQCQAsnVrtCk4Y0p_xckefLtI0p236VsX1C",
+      "method": "POST",
+      "recordsPath": "resultValue.noteList",
+      "items": 1
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "topBeginTime",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://ecp.sgcc.com.cn"
+   },
+   "firstSample": {
+    "title": "国网新源集团有限公司第三批授权采购（第一组）-国网新源控股有限公司运营信息中心2026年第三批服务框架公开谈判采购项目变更公告1",
+    "date": "2026-10-09",
+    "url": "https://ecp.sgcc.com.cn/ecp2.0/ecpwcmcore//index/firstPage/tabList?lh6RWoWu=0CnLYWqlqEi4oR2ucJPiKXyh75Lzkw7.GHVfiPMG5iVDh.6p8VS3REkirTRr8jbwgBBekjsJhdFJHHIn2.8M98n__X1VwzU8z"
+   },
+   "seq": 22,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:26.072329+08:00",
+    "replay": "",
+    "replayItems": 20,
+    "ok": true,
+    "error": "",
+    "ms": 184
+   }
+  },
+  {
+   "name": "长虹智慧供应链平台",
+   "url": "https://ecmp.changhong.com/",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://ecmp.changhong.com/srm-pb-web/biddingInformation/listByPageNoAuth?page=1&rows=15&t=1791545003000",
+   "extract": "json",
+   "tls": "strict",
+   "items": 4,
+   "newest": "2026-10-09",
+   "within7d": 1,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:26.256416+08:00",
+   "apiCall": {
+    "url": "https://ecmp.changhong.com/srm-pb-web/biddingInformation/listByPageNoAuth?page=1&rows=15&t=1791545003000",
+    "method": "POST",
+    "postData": "{\"pageInfo\":{\"page\":1,\"rows\":5},\"filters\":[{\"fieldName\":\"type\",\"value\":\"bid\",\"operator\":\"EQ\",\"fieldType\":\"string\"},{\"fieldName\":\"businessType\",\"operator\":\"EQ\",\"fieldType\":\"string\",\"value\":\"PURCHASE\"}]}",
+    "recordsPath": "rows",
+    "candidates": [
+     {
+      "url": "https://ecmp.changhong.com/srm-pb-web/biddingInformation/listByPageNoAuth?page=1&rows=15&t=1791545003000",
+      "method": "POST",
+      "recordsPath": "rows",
+      "items": 4
+     },
+     {
+      "url": "https://ecmp.changhong.com/srm-pb-web/api/sourcingInformationService/findNoAuthByPage?page=1&rows=15&t=1791545003000",
+      "method": "POST",
+      "recordsPath": "rows",
+      "items": 3
+     },
+     {
+      "url": "https://ecmp.changhong.com/srm-pb-web/biddingInformation/listByPageNoAuth?page=1&rows=15&t=1791545003000",
+      "method": "POST",
+      "recordsPath": "rows",
+      "items": 3
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "createdDate",
+     "url": "",
+     "id": "id"
+    },
+    "urlBase": "https://ecmp.changhong.com"
+   },
+   "firstSample": {
+    "title": "关于2026年长虹冰雪季品牌营销活动-传播服务项目采购公告",
+    "date": "2026-10-09",
+    "url": "https://ecmp.changhong.com/srm-pb-web/biddingInformation/listByPageNoAuth?page=1&rows=15&t=1791545003000"
+   },
+   "seq": 23,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:26.256455+08:00",
+    "replay": "",
+    "replayItems": 5,
+    "ok": true,
+    "error": "",
+    "ms": 230
+   }
+  },
+  {
+   "name": "四川省公共资源交易中心",
+   "url": "https://ggzyjy.sc.gov.cn/",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://ggzyjy.sc.gov.cn/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 6,
+   "newest": "2026-09-10",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:26.487168+08:00",
+   "seq": 24,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:26.487196+08:00",
+    "replay": "strict",
+    "replayItems": 6,
+    "ok": true,
+    "error": "",
+    "ms": 97
+   }
+  },
+  {
+   "name": "天府阳光采购平台",
+   "url": "https://www.tfygcgfw.com",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://www.tfygcgfw.com/supplier/tender/search/tenderDoc?page=1&rows=5&classify&isExternal=0&type=1,11",
+   "extract": "json",
+   "tls": "strict",
+   "items": 4,
+   "newest": "2026-10-09",
+   "within7d": 4,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:26.584846+08:00",
+   "apiCall": {
+    "url": "https://www.tfygcgfw.com/supplier/tender/search/tenderDoc?page=1&rows=5&classify&isExternal=0&type=1,11",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "data.data",
+    "candidates": [
+     {
+      "url": "https://www.tfygcgfw.com/supplier/tender/search/tenderDoc?page=1&rows=5&classify&isExternal=0&type=1,11",
+      "method": "GET",
+      "recordsPath": "data.data",
+      "items": 4
+     },
+     {
+      "url": "https://www.tfygcgfw.com/supplier/tender/search/tenderDoc?page=1&rows=5&classify&isExternal=0&type=7,12",
+      "method": "GET",
+      "recordsPath": "data.data",
+      "items": 3
+     },
+     {
+      "url": "https://www.tfygcgfw.com/supplier/tender/search/tenderDoc?page=1&rows=5&classify&isExternal=0&type=3,4,5,10",
+      "method": "GET",
+      "recordsPath": "data.data",
+      "items": 1
+     },
+     {
+      "url": "https://www.tfygcgfw.com/web/website/listInformations?types=2,6&pageNumber=0&pageSize=10",
+      "method": "GET",
+      "recordsPath": "data.content",
+      "items": 10
+     },
+     {
+      "url": "https://www.tfygcgfw.com/web/website/listInformations?types=1&pageNumber=0&pageSize=6",
+      "method": "GET",
+      "recordsPath": "data.content",
+      "items": 2
+     }
+    ],
+    "recordMap": {
+     "title": "projectName",
+     "date": "publishTime",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://www.tfygcgfw.com"
+   },
+   "firstSample": {
+    "title": "顺城盐品生石灰年度采购项目",
+    "date": "2026-10-09",
+    "url": "https://www.tfygcgfw.com/supplier/tender/search/tenderDoc?page=1&rows=5&classify&isExternal=0&type=1,11"
+   },
+   "seq": 25,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:26.584862+08:00",
+    "replay": "",
+    "replayItems": 5,
+    "ok": true,
+    "error": "",
+    "ms": 368
+   }
+  },
+  {
+   "name": "五矿国际招标责任有限公司",
+   "url": "https://minmetals.ewkzb.com/",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://minmetals.ewkzb.com/api/proclamation/list?_t=1791545004268&type=1&size=20",
+   "extract": "json",
+   "tls": "strict",
+   "items": 20,
+   "newest": "2026-10-09",
+   "within7d": 14,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:26.952970+08:00",
+   "apiCall": {
+    "url": "https://minmetals.ewkzb.com/api/proclamation/list?_t=1791545004268&type=1&size=20",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "data",
+    "candidates": [
+     {
+      "url": "https://minmetals.ewkzb.com/api/proclamation/list?_t=1791545004268&type=1&size=20",
+      "method": "GET",
+      "recordsPath": "data",
+      "items": 20
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "createTime",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://minmetals.ewkzb.com"
+   },
+   "firstSample": {
+    "title": "株洲冶炼集团股份有限公司酸雾洗涤装置采购-公开招标公告",
+    "date": "2026-10-09",
+    "url": "https://minmetals.ewkzb.com/api/proclamation/list?_t=1791545004268&type=1&size=20"
+   },
+   "seq": 26,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:26.952994+08:00",
+    "replay": "",
+    "replayItems": 20,
+    "ok": true,
+    "error": "",
+    "ms": 296
+   }
+  },
+  {
+   "name": "东咨智采平台",
+   "url": "https://www.dfmjyzx.com/",
+   "status": "blocked",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "HTTP 468",
+   "checkedAt": "2026-10-09T19:31:27.249441+08:00",
+   "seq": 27,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:27.249474+08:00",
+    "replay": "skipped:blocked",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "东风汽车采购招投标平台",
+   "url": "https://etp.dfmc.com.cn/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://etp.dfmc.com.cn/",
+   "extract": "table_row",
+   "tls": "strict",
+   "items": 50,
+   "newest": "2026-10-09",
+   "within7d": 41,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:27.249482+08:00",
+   "seq": 28,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:27.249494+08:00",
+    "replay": "strict",
+    "replayItems": 50,
+    "ok": true,
+    "error": "",
+    "ms": 254
+   }
+  },
+  {
+   "name": "长城汽车（长城汽车股份有限公司）",
+   "url": "https://srm.gwm.cn/#/login",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://srm.gwm.cn/cloud-srm/api-sou/sou-firstPage/souReqlistPage",
+   "extract": "json",
+   "tls": "strict",
+   "items": 4,
+   "newest": "2026-10-09",
+   "within7d": 4,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:27.503557+08:00",
+   "apiCall": {
+    "url": "https://srm.gwm.cn/cloud-srm/api-sou/sou-firstPage/souReqlistPage",
+    "method": "POST",
+    "postData": "{\"pageNum\":1,\"pageSize\":8}",
+    "recordsPath": "data.list",
+    "candidates": [
+     {
+      "url": "https://srm.gwm.cn/cloud-srm/api-sou/sou-firstPage/souReqlistPage",
+      "method": "POST",
+      "recordsPath": "data.list",
+      "items": 4
+     }
+    ],
+    "recordMap": {
+     "title": "projectName",
+     "date": "creationDate",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://srm.gwm.cn"
+   },
+   "firstSample": {
+    "title": "勤创服务食堂设备采购项目",
+    "date": "2026-10-09",
+    "url": "https://srm.gwm.cn/cloud-srm/api-sou/sou-firstPage/souReqlistPage"
+   },
+   "seq": 29,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:27.503571+08:00",
+    "replay": "",
+    "replayItems": 8,
+    "ok": true,
+    "error": "",
+    "ms": 155
+   }
+  },
+  {
+   "name": "中国中铁电子商务采购平台",
+   "url": "https://eproport.crecgec.com/#/home",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://eproport.crecgec.com/epu-portal/portal/bid_notice/listWithHomePage?signId=1cb3af1b1d1a12067791fac46aa97e36f8641078ef5",
+   "extract": "json",
+   "tls": "strict",
+   "items": 8,
+   "newest": "2026-10-09",
+   "within7d": 8,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:27.658914+08:00",
+   "apiCall": {
+    "url": "https://eproport.crecgec.com/epu-portal/portal/bid_notice/listWithHomePage?signId=1cb3af1b1d1a12067791fac46aa97e36f8641078ef5",
+    "method": "POST",
+    "postData": "{\"current\":1,\"size\":8,\"publicityType\":\"bidCandidatePub\"}",
+    "recordsPath": "data.records",
+    "candidates": [
+     {
+      "url": "https://eproport.crecgec.com/epu-portal/portal/bid_notice/listWithHomePage?signId=1cb3af1b1d1a12067791fac46aa97e36f8641078ef5",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 8
+     },
+     {
+      "url": "https://eproport.crecgec.com/epu-portal/portal/project/listWithHomePage?signId=d23f73e9fb1a120677918724d6fb2108005e273c49e",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 8
+     },
+     {
+      "url": "https://eproport.crecgec.com/epu-portal/portal/recruit/getRecruitResultList?signId=cb579f5a0b1a12067792a674022abf43dafd143093b",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 5
+     },
+     {
+      "url": "https://eproport.crecgec.com/epu-portal/portal/recruit/listWithHomePage?signId=ea255c94901a1206779257140bd808be6877cf7b8d5",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 2
+     }
+    ]
+   },
+   "firstSample": {
+    "title": "中铁建工建安公司溧阳固态锂电池项目风淋室采购中标候选人公示",
+    "date": "2026-10-09",
+    "url": "https://eproport.crecgec.com/epu-portal/portal/bid_notice/listWithHomePage?signId=1cb3af1b1d1a12067791fac46aa97e36f8641078ef5"
+   },
+   "seq": 30,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:27.658945+08:00",
+    "replay": "not_json",
+    "replayItems": 0,
+    "ok": false,
+    "error": "",
+    "probe": {
+     "start": "<script type=\"text/javascript\">\n    window.onload = function"
+    }
+   }
+  },
+  {
+   "name": "四川省港航投资集团有限责任公司交易管理服务平台",
+   "url": "http://ebid.scpcdc.com.cn/gonggao/index.jhtml",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "http://ebid.scpcdc.com.cn/gonggao/index.jhtml",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 30,
+   "newest": "2025-11-05",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:28.030733+08:00",
+   "seq": 31,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:28.030758+08:00",
+    "replay": "strict",
+    "replayItems": 30,
+    "ok": true,
+    "error": "",
+    "ms": 153
+   }
+  },
+  {
+   "name": "中国融通电子商务平台",
+   "url": "https://www.ronghw.cn/",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://spot-mall.ronghw.cn/api-spot-trading/api/spot/trading/spot/notice/queryPage",
+   "extract": "json",
+   "tls": "strict",
+   "items": 5,
+   "newest": "2026-10-09",
+   "within7d": 5,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:28.184342+08:00",
+   "apiCall": {
+    "url": "https://spot-mall.ronghw.cn/api-spot-trading/api/spot/trading/spot/notice/queryPage",
+    "method": "POST",
+    "postData": "{\"current\":1,\"size\":5}",
+    "recordsPath": "data.records",
+    "candidates": [
+     {
+      "url": "https://spot-mall.ronghw.cn/api-spot-trading/api/spot/trading/spot/notice/queryPage",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 5
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "createTime",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://www.ronghw.cn"
+   },
+   "firstSample": {
+    "title": "2026年北部区域报废铁木不锈钢铝制品物资第二十六批次（辽宁省）项目（N202609152）(RT-XDCC-2026093000008)竞价结果公告",
+    "date": "2026-10-09",
+    "url": "https://spot-mall.ronghw.cn/api-spot-trading/api/spot/trading/spot/notice/queryPage"
+   },
+   "seq": 32,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:28.184357+08:00",
+    "replay": "",
+    "replayItems": 5,
+    "ok": true,
+    "error": "",
+    "ms": 193
+   }
+  },
+  {
+   "name": "特变电工",
+   "url": "https://scm.tbea.com/",
+   "status": "list_ok",
+   "transport": "json",
+   "list_url": "https://scm.tbea.com/autocrud/blt.blt_bulletin_login/query",
+   "extract": "json",
+   "tls": "strict",
+   "items": 3,
+   "newest": "2026-03-20",
+   "within7d": 0,
+   "note": "GET JSON 接口，记录路径待复验确认；接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:28.378246+08:00",
+   "apiCall": {
+    "url": "https://scm.tbea.com/autocrud/blt.blt_bulletin_login/query",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "result.record",
+    "candidates": [
+     {
+      "url": "https://scm.tbea.com/autocrud/blt.blt_bulletin_login/query",
+      "method": "GET",
+      "items": 3
+     },
+     {
+      "url": "https://scm.tbea.com/autocrud/ad.manage.config.getAllShowAds/query",
+      "method": "GET",
+      "items": 0
+     },
+     {
+      "url": "https://scm.tbea.com/query",
+      "method": "GET",
+      "items": 0
+     }
+    ],
+    "recordMap": {
+     "title": "bulletin_title",
+     "date": "release_date",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://scm.tbea.com"
+   },
+   "firstSample": {
+    "title": "供应商投标、竞价、澄清操作手册",
+    "date": "2026-03-20",
+    "url": "https://scm.tbea.com/autocrud/blt.blt_bulletin_login/query"
+   },
+   "seq": 33,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:28.378301+08:00",
+    "replay": "path_fixed:result.record",
+    "replayItems": 13,
+    "ok": true,
+    "error": "",
+    "ms": 400
+   }
+  },
+  {
+   "name": "华润守正采购交易平台",
+   "url": "https://www.szecp.com.cn/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://www.szecp.com.cn/",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 18,
+   "newest": "2026-10-09",
+   "within7d": 16,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:28.779238+08:00",
+   "seq": 34,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:28.779268+08:00",
+    "replay": "strict",
+    "replayItems": 18,
+    "ok": true,
+    "error": "",
+    "ms": 145
+   }
+  },
+  {
+   "name": "成都旭光科技股份有限公司",
+   "url": "https://www.china8800.com/news-list/6.html",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://www.china8800.com/news-list/6.html",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 2,
+   "newest": "2026-08-26",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:28.924966+08:00",
+   "seq": 35,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:28.924979+08:00",
+    "replay": "strict",
+    "replayItems": 2,
+    "ok": true,
+    "error": "",
+    "ms": 256
+   }
+  },
+  {
+   "name": "四川安州发展集团有限公司",
+   "url": "https://azfzjt.com/lianxifangshi.html",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://azfzjt.com/zhaobiaogongshi.html",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 2,
+   "newest": "2026-09-29",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:29.181458+08:00",
+   "seq": 36,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:29.181471+08:00",
+    "replay": "strict",
+    "replayItems": 2,
+    "ok": true,
+    "error": "",
+    "ms": 773
+   }
+  },
+  {
+   "name": "四川港投交易管理服务平台",
+   "url": "http://ebid.scpcdc.com.cn/gonggao/index.jhtml",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "http://ebid.scpcdc.com.cn/gonggao/index.jhtml",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 30,
+   "newest": "2025-11-05",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:29.955083+08:00",
+   "seq": 37,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:29.955100+08:00",
+    "replay": "strict",
+    "replayItems": 30,
+    "ok": true,
+    "error": "",
+    "ms": 172
+   }
+  },
+  {
+   "name": "美云智数（美的）",
+   "url": "https://sourcing.meicloud.com/?ticket=ST-177137-ryJAiwsnRkopFZRx9HV2xSg9BRM-iam-sso-1-0-0-75c7f7fddd-2hqtz#/",
+   "status": "list_ok",
+   "transport": "json",
+   "list_url": "https://sourcing.meicloud.com/sourcing/front/inquiryRecommend/listInquiryRecommend",
+   "extract": "json",
+   "tls": "strict",
+   "items": 8,
+   "newest": "2026-08-21",
+   "within7d": 0,
+   "note": "GET JSON 接口，记录路径待复验确认；接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:30.127150+08:00",
+   "apiCall": {
+    "url": "https://sourcing.meicloud.com/sourcing/front/inquiryRecommend/listInquiryRecommend",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "data",
+    "candidates": [
+     {
+      "url": "https://sourcing.meicloud.com/inqueryPub",
+      "method": "GET",
+      "items": 0
+     },
+     {
+      "url": "https://sourcing.meicloud.com/sourcing/front/souRequirementSearch/search",
+      "method": "GET",
+      "items": 0
+     },
+     {
+      "url": "https://sourcing.meicloud.com/sourcing/front/souRequirementSearch/searchBuyingService",
+      "method": "GET",
+      "items": 0
+     },
+     {
+      "url": "https://sourcing.meicloud.com/sourcing/front/souRequirementSearch/searchSellingService",
+      "method": "GET",
+      "items": 0
+     },
+     {
+      "url": "https://sourcing.meicloud.com/sourcing/front/cms/listBannerByPageSearchType",
+      "method": "GET",
+      "items": 0
+     }
+    ],
+    "recordMap": {
+     "title": "inquiryTitle",
+     "date": "createTime",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://sourcing.meicloud.com"
+   },
+   "firstSample": {
+    "title": "基于阀岛装配线实现A10水壶集成装配改造的设备需求询价公告",
+    "date": "2026-08-21",
+    "url": "https://sourcing.meicloud.com/sourcing/front/inquiryRecommend/listInquiryRecommend"
+   },
+   "seq": 38,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:30.127164+08:00",
+    "replay": "path_fixed:data",
+    "replayItems": 8,
+    "ok": true,
+    "error": "",
+    "ms": 304
+   }
+  },
+  {
+   "name": "五粮液招标平台",
+   "url": "https://wuliangye.dacaigou.com/web-portal/index.html#/home",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到26个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:30.431198+08:00",
+   "seq": 39,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:30.431254+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "绵阳科技城发展投资有限公司",
+   "url": "https://zc.mysdic.com:6211/",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:30.431262+08:00",
+   "seq": 40,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:30.431269+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "波鸿实业",
+   "url": "https://bohonggroup.com.cn/bidding/index.html",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://bohonggroup.com.cn/bidding/index.html",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 13,
+   "newest": "2026-09-16",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:30.431276+08:00",
+   "seq": 41,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:30.431284+08:00",
+    "replay": "strict",
+    "replayItems": 13,
+    "ok": true,
+    "error": "",
+    "ms": 270
+   }
+  },
+  {
+   "name": "邛崃市国企项目招采",
+   "url": "https://www.qionglai.gov.cn/qlsgzxxw/c180279/gqzyxxfb_zc.shtml",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://api.chengdu.gov.cn/cdhbjkV2/index.php/Weather/aqimap?RWEXzlB0=0Pdyg.GEqWxDgwk_MshrZ55QuXklXDJA2SKUf7IxC.d9s9VUv6fSMf.dKtmJwjNfFPErsVXGP7LDaKRx1L.1OsfVHI5uJ9zL48kJQ2QosWGRlYRetTOfNHCbd8zQtuJ9_b6.lTawprSsSZKRDSNvyLM2Wqqiuu2XolEtSyVAlQ5xL6LkTK7d_oOdUHZhBWyf7xDG0uwVMGVIx5N7gQN6EMvlTA0QK72QQ0dZM4W3dBT_MBypVZWp7x1Yv1vFoWgqurghiKaxO1odfHm7yddxD2zA_Ku_zTf_TQrWhkp0LCfmUqI4lTBtjSMzaRwkaGg2LI7IO5xZFIkZ83BFJuu3gOIHm_4BmrNwFmqll_FkaqIakagTQG7K4SCJZQgKcG0RCBl0g3F1DaH5iBYa4O4gjTMjIqYbhtWv0rtnHdhr1Sos1MLhdYIuusL0E__QJDGJIQekuGXDlLaIxNVKsDKpXyiryH216H6CluxAMoFzMXgXIJRsKLVw.Q0LrvURUvIS3pWdX3Vle0grtyOkrfO6YANhy2VU_qHReylwO4azQInAqhFkL7Fp_eJYcHRrydo6JQylG9yQrD0oBBlPN3Lv4GTtxkdzimBZRLpxynWgN0eYWRFmFHRN_KZrquBmclWkv3BIHtFNUgnGo",
+   "extract": "json",
+   "tls": "strict",
+   "items": 19,
+   "newest": "2026-10-09",
+   "within7d": 15,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:30.701649+08:00",
+   "apiCall": {
+    "url": "https://api.chengdu.gov.cn/cdhbjkV2/index.php/Weather/aqimap?RWEXzlB0=0Pdyg.GEqWxDgwk_MshrZ55QuXklXDJA2SKUf7IxC.d9s9VUv6fSMf.dKtmJwjNfFPErsVXGP7LDaKRx1L.1OsfVHI5uJ9zL48kJQ2QosWGRlYRetTOfNHCbd8zQtuJ9_b6.lTawprSsSZKRDSNvyLM2Wqqiuu2XolEtSyVAlQ5xL6LkTK7d_oOdUHZhBWyf7xDG0uwVMGVIx5N7gQN6EMvlTA0QK72QQ0dZM4W3dBT_MBypVZWp7x1Yv1vFoWgqurghiKaxO1odfHm7yddxD2zA_Ku_zTf_TQrWhkp0LCfmUqI4lTBtjSMzaRwkaGg2LI7IO5xZFIkZ83BFJuu3gOIHm_4BmrNwFmqll_FkaqIakagTQG7K4SCJZQgKcG0RCBl0g3F1DaH5iBYa4O4gjTMjIqYbhtWv0rtnHdhr1Sos1MLhdYIuusL0E__QJDGJIQekuGXDlLaIxNVKsDKpXyiryH216H6CluxAMoFzMXgXIJRsKLVw.Q0LrvURUvIS3pWdX3Vle0grtyOkrfO6YANhy2VU_qHReylwO4azQInAqhFkL7Fp_eJYcHRrydo6JQylG9yQrD0oBBlPN3Lv4GTtxkdzimBZRLpxynWgN0eYWRFmFHRN_KZrquBmclWkv3BIHtFNUgnGo",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "results",
+    "candidates": [
+     {
+      "url": "https://api.chengdu.gov.cn/cdhbjkV2/index.php/Weather/aqimap?RWEXzlB0=0Pdyg.GEqWxDgwk_MshrZ55QuXklXDJA2SKUf7IxC.d9s9VUv6fSMf.dKtmJwjNfFPErsVXGP7LDaKRx1L.1OsfVHI5uJ9zL48kJQ2QosWGRlYRetTOfNHCbd8zQtuJ9_b6.lTawprSsSZKRDSNvyLM2Wqqiuu2XolEtSyVAlQ5xL6LkTK7d_oOdUHZhBWyf7xDG0uwVMGVIx5N7gQN6EMvlTA0QK72QQ0dZM4W3dBT_MBypVZWp7x1Yv1vFoWgqurghiKaxO1odfHm7yddxD2zA_Ku_zTf_TQrWhkp0LCfmUqI4lTBtjSMzaRwkaGg2LI7IO5xZFIkZ83BFJuu3gOIHm_4BmrNwFmqll_FkaqIakagTQG7K4SCJZQgKcG0RCBl0g3F1DaH5iBYa4O4gjTMjIqYbhtWv0rtnHdhr1Sos1MLhdYIuusL0E__QJDGJIQekuGXDlLaIxNVKsDKpXyiryH216H6CluxAMoFzMXgXIJRsKLVw.Q0LrvURUvIS3pWdX3Vle0grtyOkrfO6YANhy2VU_qHReylwO4azQInAqhFkL7Fp_eJYcHRrydo6JQylG9yQrD0oBBlPN3Lv4GTtxkdzimBZRLpxynWgN0eYWRFmFHRN_KZrquBmclWkv3BIHtFNUgnGo",
+      "method": "GET",
+      "recordsPath": "results",
+      "items": 19
+     }
+    ]
+   },
+   "firstSample": {
+    "title": "2026-2027年度水质、固废、废气和噪音等检测服务项目（第三次）竞争性磋商邀请",
+    "date": "2026-10-09",
+    "url": "https://ctbpsp.com/#/bulletinDetail?uuid=580fed1c-0455-4f00-b8b9-7b3804d07de5&inpvalue=2026-2027%E5%B9%B4%E5%BA%A6%E6%B0%B4%E8%B4%A8%E3%80%81%E5%9B%BA%E5%BA%9F%E3%80%81%E5%BA%9F%E6%B0%94%E5%92%8C%E5%99%AA%E9%9F%B3%E7%AD%89%E6%A3%80%E6%B5%8B%E6%9C%8D%E5%8A%A1%E9%A1%B9%E7%9B%AE&dataSource=0&tenderAgency="
+   },
+   "seq": 42,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:30.701665+08:00",
+    "replay": "",
+    "replayItems": 0,
+    "ok": false,
+    "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.chengdu.gov.cn/cdhbjkV2/index.php/Weather/aqimap?RWEXzlB0=0Pdyg.GEqW"
+   }
+  },
+  {
+   "name": "深圳阳光采购平台",
+   "url": "https://ygcg.szexgrp.com/jyxx",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://ygcg.szexgrp.com/api/v1/trade/content/page",
+   "extract": "json",
+   "tls": "strict",
+   "items": 9,
+   "newest": "2026-10-09",
+   "within7d": 9,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:30.743337+08:00",
+   "apiCall": {
+    "url": "https://ygcg.szexgrp.com/api/v1/trade/content/page",
+    "method": "POST",
+    "postData": "{\"channelId\":4161,\"fields\":null,\"title\":\"\",\"bidSectionNumber\":\"\",\"purchaseCom\":\"\",\"releaseTimeBegin\":null,\"releaseTimeEnd\":null,\"siteId\":216,\"page\":0,\"size\":10,\"keyword\":\"\"}",
+    "recordsPath": "data.content",
+    "candidates": [
+     {
+      "url": "https://ygcg.szexgrp.com/api/v1/trade/content/page",
+      "method": "POST",
+      "recordsPath": "data.content",
+      "items": 9
+     },
+     {
+      "url": "https://ygcg.szexgrp.com/api/v1/trade/content/page",
+      "method": "POST",
+      "recordsPath": "data.content",
+      "items": 1
+     }
+    ],
+    "recordMap": {
+     "title": "noticeTitle",
+     "date": "noticeStartTime",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://ygcg.szexgrp.com"
+   },
+   "firstSample": {
+    "title": "化州深能环保有限公司2026年C修备件电气专业电伴热带采购HZ-XJ-26-172-1",
+    "date": "2026-10-09",
+    "url": "https://ygcg.szexgrp.com/api/v1/trade/content/page"
+   },
+   "seq": 43,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:30.743357+08:00",
+    "replay": "",
+    "replayItems": 10,
+    "ok": true,
+    "error": "",
+    "ms": 201
+   }
+  },
+  {
+   "name": "长城慧采云",
+   "url": "https://srm.gwm.cn/#/login",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://srm.gwm.cn/cloud-srm/api-sou/sou-firstPage/souReqlistPage",
+   "extract": "json",
+   "tls": "strict",
+   "items": 4,
+   "newest": "2026-10-09",
+   "within7d": 4,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:30.945325+08:00",
+   "apiCall": {
+    "url": "https://srm.gwm.cn/cloud-srm/api-sou/sou-firstPage/souReqlistPage",
+    "method": "POST",
+    "postData": "{\"pageNum\":1,\"pageSize\":8}",
+    "recordsPath": "data.list",
+    "candidates": [
+     {
+      "url": "https://srm.gwm.cn/cloud-srm/api-sou/sou-firstPage/souReqlistPage",
+      "method": "POST",
+      "recordsPath": "data.list",
+      "items": 4
+     }
+    ],
+    "recordMap": {
+     "title": "projectName",
+     "date": "creationDate",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://srm.gwm.cn"
+   },
+   "firstSample": {
+    "title": "勤创服务食堂设备采购项目",
+    "date": "2026-10-09",
+    "url": "https://srm.gwm.cn/cloud-srm/api-sou/sou-firstPage/souReqlistPage"
+   },
+   "seq": 44,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:30.945356+08:00",
+    "replay": "",
+    "replayItems": 8,
+    "ok": true,
+    "error": "",
+    "ms": 158
+   }
+  },
+  {
+   "name": "奇瑞汽车",
+   "url": "https://ebd.mychery.com",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://ebd.mychery.com",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 1,
+   "newest": "2026-05-21",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:31.104173+08:00",
+   "seq": 45,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:31.104196+08:00",
+    "replay": "strict",
+    "replayItems": 1,
+    "ok": true,
+    "error": "",
+    "ms": 169
+   }
+  },
+  {
+   "name": "长安汽车供应链协同云平台",
+   "url": "https://portal.changan.com.cn/user/login?_t=1760603726875&redirect=%2F",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://portal.changan.com.cn/backend_8086/changan_platform/api/nonPdcSourceNoticeCt/listSourceNoticeTopBySupplier?_t=1791545022",
+   "extract": "json",
+   "tls": "strict",
+   "items": 2,
+   "newest": "2026-10-08",
+   "within7d": 1,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:31.273707+08:00",
+   "apiCall": {
+    "url": "https://portal.changan.com.cn/backend_8086/changan_platform/api/nonPdcSourceNoticeCt/listSourceNoticeTopBySupplier?_t=1791545022",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "result",
+    "candidates": [
+     {
+      "url": "https://portal.changan.com.cn/backend_8086/changan_platform/api/nonPdcSourceNoticeCt/listSourceNoticeTopBySupplier?_t=1791545022",
+      "method": "GET",
+      "recordsPath": "result",
+      "items": 2
+     },
+     {
+      "url": "https://portal.changan.com.cn/backend_8086/changan_platform/tongzhi/ntcNoticeInfo/systemList?_t=1791545022&pageSize=5",
+      "method": "GET",
+      "recordsPath": "data",
+      "items": 1
+     }
+    ],
+    "recordMap": {
+     "title": "projectName",
+     "date": "startTime",
+     "url": "",
+     "id": "id"
+    },
+    "urlBase": "https://portal.changan.com.cn"
+   },
+   "firstSample": {
+    "title": "梧桐科技- 电阻箱采购公开寻源公告",
+    "date": "2026-10-08",
+    "url": "https://portal.changan.com.cn/backend_8086/changan_platform/api/nonPdcSourceNoticeCt/listSourceNoticeTopBySupplier?_t=1791545022"
+   },
+   "seq": 46,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:31.273724+08:00",
+    "replay": "",
+    "replayItems": 2,
+    "ok": true,
+    "error": "",
+    "ms": 78
+   }
+  },
+  {
+   "name": "四川安吉物流集团有限公司",
+   "url": "https://anjilog.com/about/zhaobiaocaigou",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://gwadmin.anjilog.com/api/getNews",
+   "extract": "json",
+   "tls": "strict",
+   "items": 20,
+   "newest": "2026-10-09",
+   "within7d": 12,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:31.351915+08:00",
+   "apiCall": {
+    "url": "https://gwadmin.anjilog.com/api/getNews",
+    "method": "POST",
+    "postData": "catid=33&page=1",
+    "recordsPath": "data.newlist",
+    "candidates": [
+     {
+      "url": "https://gwadmin.anjilog.com/api/getNews",
+      "method": "POST",
+      "recordsPath": "data.newlist",
+      "items": 20
+     }
+    ]
+   },
+   "firstSample": {
+    "title": "宜宾安鸿投资有限公司上汽大众展厅升级改造工程编制工程预算服务公开竞价公告",
+    "date": "2026-10-09",
+    "url": "https://gwadmin.anjilog.com/api/getNews"
+   },
+   "seq": 47,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:31.351938+08:00",
+    "replay": "title_field_unknown",
+    "replayItems": 12,
+    "ok": true,
+    "error": "",
+    "probe": {
+     "fields": [
+      "catid",
+      "cid",
+      "create_time",
+      "description",
+      "thumb",
+      "title"
+     ]
+    },
+    "ms": 125
+   }
+  },
+  {
+   "name": "中航工业电子招投标平台",
+   "url": "https://ebid.eavic.com/cms/index.htm",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://ebid.eavic.com/cms/index.htm",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 53,
+   "newest": "2026-10-09",
+   "within7d": 37,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:31.477539+08:00",
+   "seq": 48,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:31.477562+08:00",
+    "replay": "strict",
+    "replayItems": 52,
+    "ok": true,
+    "error": "",
+    "ms": 1857
+   }
+  },
+  {
+   "name": "国投集团电子采购平台",
+   "url": "https://www.sdicc.com.cn/",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到2个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:33.334674+08:00",
+   "seq": 49,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:33.334688+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "中国能建电子采购平台",
+   "url": "https://ec.ceec.net.cn/Default.aspx",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://ec.ceec.net.cn/Default.aspx",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 29,
+   "newest": "2026-10-16",
+   "within7d": 24,
+   "note": "7条日期落在未来（行内只有截止/开标时间），已按最早日期兜底",
+   "checkedAt": "2026-10-09T19:31:33.334693+08:00",
+   "seq": 50,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:33.334698+08:00",
+    "replay": "strict",
+    "replayItems": 31,
+    "ok": true,
+    "error": "",
+    "ms": 263
+   }
+  },
+  {
+   "name": "航天科工集中采购平台",
+   "url": "https://www.e-casic.com/",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到15个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:33.597938+08:00",
+   "seq": 51,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:33.597956+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "成都传媒招采平台",
+   "url": "https://zbcg.cmgchengdu.com/#/official/index",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://zbcg.cmgchengdu.com/api/web/announcement/list?page=1&limit=10&announcement_type=1&announcement_title=",
+   "extract": "json",
+   "tls": "strict",
+   "items": 10,
+   "newest": "2026-10-09",
+   "within7d": 10,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:33.597962+08:00",
+   "apiCall": {
+    "url": "https://zbcg.cmgchengdu.com/api/web/announcement/list?page=1&limit=10&announcement_type=1&announcement_title=",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "data.list",
+    "candidates": [
+     {
+      "url": "https://zbcg.cmgchengdu.com/api/web/announcement/list?page=1&limit=10&announcement_type=1&announcement_title=",
+      "method": "GET",
+      "recordsPath": "data.list",
+      "items": 10
+     }
+    ],
+    "recordMap": {
+     "title": "announcement_title",
+     "date": "release_time",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://zbcg.cmgchengdu.com"
+   },
+   "firstSample": {
+    "title": "成都商报社贵州茅台年度宣传视频摄制服务项目比选采购公告",
+    "date": "2026-10-09",
+    "url": "https://zbcg.cmgchengdu.com/api/web/announcement/list?page=1&limit=10&announcement_type=1&announcement_title="
+   },
+   "seq": 52,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:33.597971+08:00",
+    "replay": "",
+    "replayItems": 10,
+    "ok": true,
+    "error": "",
+    "ms": 362
+   }
+  },
+  {
+   "name": "四川圣山白玉兰实业有限公司",
+   "url": "https://www.whitemagnolia.cn/news/3.html",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到41个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:33.960540+08:00",
+   "seq": 53,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:33.960569+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "四川中烟工业有限责任公司",
+   "url": "http://scgy.tobacco.com.cn/sczy/CustomPage#ZBGG",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "http://scgy.tobacco.com.cn/api/egw/service?page=1&rows=10",
+   "extract": "json",
+   "tls": "strict",
+   "items": 9,
+   "newest": "2026-10-09",
+   "within7d": 9,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:33.960577+08:00",
+   "apiCall": {
+    "url": "http://scgy.tobacco.com.cn/api/egw/service?page=1&rows=10",
+    "method": "POST",
+    "postData": "a6Gnl1QIG/cAjc++foGBmoyeT4sUnFB0uJAsbueYLZj48DAuOdjAOriC2GYzPGdttT4cunVoVb+YpfHBEEHRdc5h5eJh6pADBjeLWPRegwITGfB+uxm5qX7Rm36NjhcB3k2WuR8EDD5K98fSqEGYbKjvU+6j7wIAe68KZMu4Vh7sikPRt9N3nAdkc9piSy+QvW5w+f5U/A08RUt3U/4w3YeI41J1KbIo41sRe6ljl4baJbAE4Hf7e1Urz/ahqULjJq7rbkiuBwnyYU4Ri+jmjZyz94MG716L8w1jUU4OpWGwzH34at9JuxfjuNtiWyclRKeXxnFv7FVOBf01VdGEJ7c2+AsyexO09HuYit/xkEMfeH3GGnWmNEy1rmUllecLcRA2qeiVXIEA2hBn0191AgDRFXcuYiKi3MfHYNWhcmWXbpH051/yQCm8fAdOjs13n6h+eX8qNXBLCTY1iCsvuz+J/XNJXAVKRfxNhg8GNq0Em/XI12GfKXywXbrXbJAE3QN5MdyoYb2n9/77og+eKYQM7wdSZtKz1U7Fz/S1lYnvkp0d2X/jGeHNdNhdgRdX",
+    "recordsPath": "data.resultset",
+    "candidates": [
+     {
+      "url": "http://scgy.tobacco.com.cn/api/egw/service?page=1&rows=10",
+      "method": "POST",
+      "recordsPath": "data.resultset",
+      "items": 9
+     }
+    ]
+   },
+   "firstSample": {
+    "title": "四川三联新材料有限公司2026-2027年加热器具深圳研发创新平台办公场所租赁服务采购项目流标公告",
+    "date": "2026-10-09",
+    "url": "http://scgy.tobacco.com.cn/api/egw/service?page=1&rows=10"
+   },
+   "seq": 54,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:33.960587+08:00",
+    "replay": "",
+    "replayItems": 0,
+    "ok": false,
+    "error": "HTTPStatusError: Server error '500 ' for url 'http://scgy.tobacco.com.cn/api/egw/service?page=1&rows=10'\nFor more information check: http"
+   }
+  },
+  {
+   "name": "中国石油招标投标网",
+   "url": "https://www.cnpcbidding.com/#/tenders",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "验证码",
+   "checkedAt": "2026-10-09T19:31:33.991984+08:00",
+   "seq": 55,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:33.992010+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "蒙牛集团电子采购招标平台",
+   "url": "https://zbcg.mengniu.cn/#/home",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到24个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:33.992018+08:00",
+   "seq": 56,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:33.992026+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "中国航空集团有限公司采购管理平台",
+   "url": "https://pur.airchina.com.cn/",
+   "status": "render_only",
+   "transport": "render",
+   "list_url": "https://pur.airchina.com.cn/001/001001/moreinfo.html",
+   "extract": "dom",
+   "tls": "strict",
+   "items": 8,
+   "newest": "2026-10-09",
+   "within7d": 8,
+   "note": "仅浏览器渲染可取到列表（复验标注 needs_browser）",
+   "checkedAt": "2026-10-09T19:31:33.992032+08:00",
+   "firstSample": {
+    "title": "关于2026年上海中航泊悦酒店白酒、黄酒采购项目再次公告",
+    "date": "2026-10-09",
+    "url": "https://pur.airchina.com.cn/001/001001/20261009/0fea6b1e-6700-428f-9599-7bfb31917f85.html"
+   },
+   "seq": 57,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:33.992042+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "中国南方航空采购招标网",
+   "url": "https://csbidding.csair.cn/cms/nfhk/webfile/zbcg/zbgg/index.html",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://csbidding.csair.cn/cms/api/dynamicData/queryContentPage",
+   "extract": "json",
+   "tls": "strict",
+   "items": 15,
+   "newest": "2026-10-09",
+   "within7d": 12,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:33.992048+08:00",
+   "apiCall": {
+    "url": "https://csbidding.csair.cn/cms/api/dynamicData/queryContentPage",
+    "method": "POST",
+    "postData": "{\"pageSize\":15,\"dto\":{\"siteId\":\"747\",\"categoryId\":\"964895061131132928\",\"agentCompanyName\":\"\",\"title\":\"\",\"province\":\"\",\"city\":\"\",\"publishDays\":\"\",\"estimateTotalPriceBegin\":\"\",\"estimateTotalPriceEnd\":\"\"}}",
+    "recordsPath": "res.rows",
+    "candidates": [
+     {
+      "url": "https://csbidding.csair.cn/cms/api/dynamicData/queryContentPage",
+      "method": "POST",
+      "recordsPath": "res.rows",
+      "items": 15
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "publishDate",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://csbidding.csair.cn"
+   },
+   "firstSample": {
+    "title": "南航2026-2029年呼和浩特驻勤酒店服务采购项目招标公告",
+    "date": "2026-10-09",
+    "url": "https://csbidding.csair.cn/zbcg/zbgg/20261009/1293267355845001216.html"
+   },
+   "seq": 58,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:33.992057+08:00",
+    "replay": "",
+    "replayItems": 15,
+    "ok": true,
+    "error": "",
+    "ms": 618
+   }
+  },
+  {
+   "name": "新希望采招平台",
+   "url": "http://cz.newhope.cn/index.php?m=default",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "验证码",
+   "checkedAt": "2026-10-09T19:31:34.610106+08:00",
+   "seq": 59,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:34.610141+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "富临精工股份有限公司",
+   "url": "https://www.fulinpm.com/news.aspx?cid=5&pid=21#news",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://www.fulinpm.com/news.aspx?cid=5&pid=21#news",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 4,
+   "newest": "2026-09-16",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:34.610149+08:00",
+   "seq": 60,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:34.610159+08:00",
+    "replay": "strict",
+    "replayItems": 4,
+    "ok": true,
+    "error": "",
+    "ms": 98
+   }
+  },
+  {
+   "name": "零食有鸣",
+   "url": "https://www.cdlsym.com/news/",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:34.708764+08:00",
+   "seq": 61,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:34.708786+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "成都宏明电子股份有限公司",
+   "url": "https://www.chinahongming.com/news/notice/",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:34.708793+08:00",
+   "seq": 62,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:34.708799+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "四川省现代种业发展集团有限公司",
+   "url": "https://www.sczygroup.cn/zhaobiaocaigou",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://www.sczygroup.cn/gonggao",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 8,
+   "newest": "2026-08-31",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:34.708804+08:00",
+   "seq": 63,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:34.708811+08:00",
+    "replay": "strict",
+    "replayItems": 8,
+    "ok": true,
+    "error": "",
+    "ms": 183
+   }
+  },
+  {
+   "name": "眉山仁寿县属国有企业物资（服务）采购平台",
+   "url": "https://www.rsgqcg.com/002/electronicBidding.html",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://www.rsgqcg.com/002/electronicBidding.html",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 12,
+   "newest": "2026-09-30",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:34.892310+08:00",
+   "seq": 64,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:34.892330+08:00",
+    "replay": "strict",
+    "replayItems": 12,
+    "ok": true,
+    "error": "",
+    "ms": 90
+   }
+  },
+  {
+   "name": "安琪酵母股份有限公司",
+   "url": "https://angelyeast.going-link.com/app/public/home",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://angelyeast.going-link.com/marmot/v1/3546/marmot-api-public/8yazMUBiaMSib55shs97ENF98myEAdkqTMN85rYYJcoOxOTCDdzeESOgbjib49DdYKr?isPubFlag=1",
+   "extract": "json",
+   "tls": "strict",
+   "items": 20,
+   "newest": "2026-10-09",
+   "within7d": 1,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:34.983198+08:00",
+   "apiCall": {
+    "url": "https://angelyeast.going-link.com/marmot/v1/3546/marmot-api-public/8yazMUBiaMSib55shs97ENF98myEAdkqTMN85rYYJcoOxOTCDdzeESOgbjib49DdYKr?isPubFlag=1",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "items",
+    "candidates": [
+     {
+      "url": "https://angelyeast.going-link.com/marmot/v1/3546/marmot-api-public/8yazMUBiaMSib55shs97ENF98myEAdkqTMN85rYYJcoOxOTCDdzeESOgbjib49DdYKr?isPubFlag=1",
+      "method": "GET",
+      "recordsPath": "[0].noticeList",
+      "items": 20
+     },
+     {
+      "url": "https://angelyeast.going-link.com/marmot/v1/3546/marmot-api-public/8yazMUBiaMSib55shs97ENF98myEAdkqTMN85rYYJcoOxOTCDdzeESOgbjib49DdYKr?cardId=405698&isPubFlag=1",
+      "method": "GET",
+      "recordsPath": "$",
+      "items": 20
+     },
+     {
+      "url": "https://angelyeast.going-link.com/marmot/v1/3546/marmot-api-public/8yazMUBiaMSib55shs97ENF98myEAdkqTMN85rYYJcoOxOTCDdzeESOgbjib49DdYKr?cardId=405696&isPubFlag=1",
+      "method": "GET",
+      "recordsPath": "$",
+      "items": 20
+     },
+     {
+      "url": "https://angelyeast.going-link.com/marmot/v1/3546/marmot-api-public/8yazMUBiaMSib55shs97ENF98myEAdkqTMN85rYYJcoOxOTCDdzeESOgbjib49DdYKr?cardId=405697&isPubFlag=1",
+      "method": "GET",
+      "recordsPath": "$",
+      "items": 20
+     },
+     {
+      "url": "https://angelyeast.going-link.com/marmot/v1/3546/marmot-api-public/8yazMUBiaMSib55shs97ENF98myEAdkqTMN85rYYJcoOxOTCDdzeESOgbjib49DdYKr?cardId=405695&isPubFlag=1",
+      "method": "GET",
+      "recordsPath": "$",
+      "items": 20
+     }
+    ]
+   },
+   "firstSample": {
+    "title": "安琪酵母（柳州）有限公司酵母蛋白生产线技术改造项目建筑工程施工自愿招标项目招标公告",
+    "date": "2026-10-09",
+    "url": "https://angelyeast.going-link.com/marmot/v1/3546/marmot-api-public/8yazMUBiaMSib55shs97ENF98myEAdkqTMN85rYYJcoOxOTCDdzeESOgbjib49DdYKr?isPubFlag=1"
+   },
+   "seq": 65,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:34.983219+08:00",
+    "replay": "title_field_unknown",
+    "replayItems": 12,
+    "ok": true,
+    "error": "",
+    "probe": {
+     "fields": [
+      "cardId",
+      "cardName",
+      "cardType",
+      "noticeList"
+     ]
+    },
+    "ms": 552
+   }
+  },
+  {
+   "name": "中国政府采购网",
+   "url": "http://www.ccgp.gov.cn/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "http://www.ccgp.gov.cn/cggg/zygg/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 19,
+   "newest": "2026-10-09",
+   "within7d": 19,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:35.535896+08:00",
+   "seq": 66,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:35.535920+08:00",
+    "replay": "strict",
+    "replayItems": 18,
+    "ok": true,
+    "error": "",
+    "ms": 120
+   }
+  },
+  {
+   "name": "中航招标网数智采购运营平台",
+   "url": "https://www.avicbid.com/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://www.avicbid.com/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 42,
+   "newest": "2026-10-09",
+   "within7d": 31,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:35.656424+08:00",
+   "seq": 67,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:35.656439+08:00",
+    "replay": "strict",
+    "replayItems": 42,
+    "ok": true,
+    "error": "",
+    "ms": 641
+   }
+  },
+  {
+   "name": "四川招标投标交易服务平台",
+   "url": "https://www.scebid.com",
+   "status": "list_ok",
+   "transport": "json",
+   "list_url": "https://www.scebid.com/baseApi/portal/queryArticleList",
+   "extract": "json",
+   "tls": "strict",
+   "items": 42,
+   "newest": "2026-07-17",
+   "within7d": 0,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:36.298439+08:00",
+   "apiCall": {
+    "url": "https://www.scebid.com/baseApi/portal/queryArticleList",
+    "method": "POST",
+    "postData": "{\"current\":1,\"size\":-1,\"keywords\":\"\",\"type\":\"article_type#bid_industry_dynamics\"}",
+    "recordsPath": "data.records",
+    "candidates": [
+     {
+      "url": "https://www.scebid.com/baseApi/portal/queryArticleList",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 42
+     },
+     {
+      "url": "https://www.scebid.com/baseApi/portal/queryArticleList",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 42
+     },
+     {
+      "url": "https://www.scebid.com/baseApi/portal/queryProjectNoticeList",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 8
+     },
+     {
+      "url": "https://www.scebid.com/baseApi/portal/queryProjectNoticeList",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 7
+     },
+     {
+      "url": "https://www.scebid.com/baseApi/portal/publicity/infomercial/list",
+      "method": "POST",
+      "recordsPath": "data.records",
+      "items": 5
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "createTime",
+     "url": "",
+     "id": "id"
+    },
+    "urlBase": "https://www.scebid.com"
+   },
+   "firstSample": {
+    "title": "招投标现场管理出新规！交易中心不替代招标人履行主体责任",
+    "date": "2026-07-16",
+    "url": "https://www.scebid.com/baseApi/portal/queryArticleList"
+   },
+   "seq": 68,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:36.298455+08:00",
+    "replay": "",
+    "replayItems": 644,
+    "ok": true,
+    "error": "",
+    "ms": 619
+   }
+  },
+  {
+   "name": "中国通用招标网",
+   "url": "https://www.china-tender.com.cn/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://www.china-tender.com.cn/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 37,
+   "newest": "2026-10-09",
+   "within7d": 26,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:36.918144+08:00",
+   "seq": 69,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:36.918171+08:00",
+    "replay": "strict",
+    "replayItems": 37,
+    "ok": true,
+    "error": "",
+    "ms": 549
+   }
+  },
+  {
+   "name": "四川政务服务网",
+   "url": "https://www.sczwfw.gov.cn/?areaCode=510000000000",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到6个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:37.467757+08:00",
+   "seq": 70,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:37.467773+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "四川招投标网",
+   "url": "http://www.scbid.com/",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:37.467779+08:00",
+   "seq": 71,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:37.467784+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "中招联合招标采购网",
+   "url": "http://www.365trade.com.cn/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "http://www.365trade.com.cn/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 36,
+   "newest": "2026-10-09",
+   "within7d": 36,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:37.467789+08:00",
+   "seq": 72,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:37.467794+08:00",
+    "replay": "strict",
+    "replayItems": 35,
+    "ok": true,
+    "error": "",
+    "ms": 243
+   }
+  },
+  {
+   "name": "中国远东国际招标有限公司",
+   "url": "https://www.cfet.com.cn/cms/default/webfile/2ywgg0/index.html",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://www.cfet.com.cn/cms/api/dynamicData/queryContentPage",
+   "extract": "json",
+   "tls": "strict",
+   "items": 10,
+   "newest": "2026-10-09",
+   "within7d": 10,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:37.711779+08:00",
+   "apiCall": {
+    "url": "https://www.cfet.com.cn/cms/api/dynamicData/queryContentPage",
+    "method": "POST",
+    "postData": "{\"pageSize\":\"10\",\"dto\":{\"siteId\":\"725\",\"categoryId\":\"229,230,231,232,233\",\"city\":\"\",\"county\":\"\",\"purchaseMode\":\"\",\"secondCompanyId\":\"\"}}",
+    "recordsPath": "res.rows",
+    "candidates": [
+     {
+      "url": "https://www.cfet.com.cn/cms/api/dynamicData/queryContentPage",
+      "method": "POST",
+      "recordsPath": "res.rows",
+      "items": 10
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "publishDate",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://www.cfet.com.cn"
+   },
+   "firstSample": {
+    "title": "离子色谱仪设备采购项目（二次）中标候选人公示",
+    "date": "2026-10-09",
+    "url": "https://www.cfet.com.cn/2ywgg4/20261009/1293233952038846464.html"
+   },
+   "seq": 73,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:37.711800+08:00",
+    "replay": "",
+    "replayItems": 10,
+    "ok": true,
+    "error": "",
+    "ms": 345
+   }
+  },
+  {
+   "name": "四川中志招标代理有限公司",
+   "url": "http://www.sczzzb.com/appsso/login?service=http%3A%2F%2Fwww.sczzzb.com%2Fplate%2F",
+   "status": "unreachable",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "ReadTimeout: timed out",
+   "checkedAt": "2026-10-09T19:31:38.057044+08:00",
+   "seq": 74,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:38.057070+08:00",
+    "replay": "skipped:unreachable",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "中钢招标有限责任公司",
+   "url": "http://tendering.sinosteel.com",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "http://tendering.sinosteel.com",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 5,
+   "newest": "2026-03-25",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:38.057105+08:00",
+   "seq": 75,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:38.057152+08:00",
+    "replay": "strict",
+    "replayItems": 5,
+    "ok": true,
+    "error": "",
+    "ms": 103
+   }
+  },
+  {
+   "name": "中化商务招标电子平台",
+   "url": "https://ebid.sinochemitc.com/web-portal/#/home",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到36个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:38.160505+08:00",
+   "seq": 76,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:38.160519+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "四川轩辕招标代理有限公司",
+   "url": "http://www.scbidding.com/p/gao.html",
+   "status": "render_only",
+   "transport": "render",
+   "list_url": "https://www.scbidding.com/p/gao.html",
+   "extract": "dom",
+   "tls": "strict",
+   "items": 6,
+   "newest": "2026-10-30",
+   "within7d": 2,
+   "note": "仅浏览器渲染可取到列表（复验标注 needs_browser）",
+   "checkedAt": "2026-10-09T19:31:38.160524+08:00",
+   "firstSample": {
+    "title": "成都市妇女儿童中心医院（成都市妇幼保健院、成都市妇... 项目概况2026年第三批医疗设备采购项目的潜在投标人应在四川省政府采购一体化平台项目电子化交易系统（以下简称“项目电子化交易系统”）获取招标文件，并于2026年10月30日 10时0",
+    "date": "2026-10-30",
+    "url": "https://www.scbidding.com/news/1389.html"
+   },
+   "seq": 77,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:38.160531+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "国药器材电子招标采购平台",
+   "url": "https://sinopharmzc.com/#/home",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:38.160537+08:00",
+   "seq": 78,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:38.160542+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "鞍钢智慧招投标平台",
+   "url": "http://bid.ansteel.cn",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://bid.ansteel.cn/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 5,
+   "newest": "2026-08-13",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:38.160546+08:00",
+   "seq": 79,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:38.160551+08:00",
+    "replay": "strict",
+    "replayItems": 5,
+    "ok": true,
+    "error": "",
+    "ms": 207
+   }
+  },
+  {
+   "name": "雅安文旅(雅安文化旅游集团有限责任公司)",
+   "url": "http://www.yaanwl.com/index.html",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://www.yaanwl.com/news/1de13f13a4452f9ed641aefc7538cdb4.html",
+   "extract": "li_item",
+   "tls": "relaxed",
+   "items": 9,
+   "newest": "2026-07-07",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:38.368094+08:00",
+   "seq": 80,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:38.368107+08:00",
+    "replay": "relaxed",
+    "replayItems": 9,
+    "ok": true,
+    "error": "",
+    "ms": 379
+   }
+  },
+  {
+   "name": "中国太平保险集团集中采购门户",
+   "url": "https://eps.cntaiping.com/",
+   "status": "render_only",
+   "transport": "render",
+   "list_url": "https://eps.cntaiping.com/",
+   "extract": "dom",
+   "tls": "strict",
+   "items": 17,
+   "newest": "2026-10-09",
+   "within7d": 17,
+   "note": "仅浏览器渲染可取到列表（复验标注 needs_browser）",
+   "checkedAt": "2026-10-09T19:31:38.747696+08:00",
+   "firstSample": {
+    "title": "服务 太平石化金融租赁有限责任公司2026-2028年租赁业务风险信息服务采购项目供应商征集公告 NEW",
+    "date": "2026-10-09",
+    "url": "https://eps.cntaiping.com/cms/default/webfile/1ywgg2/20261009/1293258742397140992.html"
+   },
+   "seq": 81,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:38.747718+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "中铁鲁班商务网",
+   "url": "https://www.crecgec.com",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://www.crecgec.com",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 18,
+   "newest": "2026-10-09",
+   "within7d": 17,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:38.747725+08:00",
+   "seq": 82,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:38.747731+08:00",
+    "replay": "strict",
+    "replayItems": 19,
+    "ok": true,
+    "error": "",
+    "ms": 336
+   }
+  },
+  {
+   "name": "长虹置业",
+   "url": "http://www.chre.cn/mes.aspx",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "http://www.chre.cn/mes.aspx",
+   "extract": "table_row",
+   "tls": "strict",
+   "items": 6,
+   "newest": "2026-09-29",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:39.084663+08:00",
+   "seq": 83,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:39.084677+08:00",
+    "replay": "strict",
+    "replayItems": 6,
+    "ok": true,
+    "error": "",
+    "ms": 89
+   }
+  },
+  {
+   "name": "成都宏科电子科技有限公司",
+   "url": "https://www.chinahongke.com/news/gonggao/",
+   "status": "no_listing",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "渲染后仍未发现带日期的公告列表",
+   "checkedAt": "2026-10-09T19:31:39.174141+08:00",
+   "seq": 84,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:39.174157+08:00",
+    "replay": "needs_browser",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "中国烟草电子采购平台",
+   "url": "https://cgjy.tobacco.com.cn/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://cgjy.tobacco.com.cn/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 72,
+   "newest": "2026-10-09",
+   "within7d": 63,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:39.174163+08:00",
+   "seq": 85,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:39.174169+08:00",
+    "replay": "strict",
+    "replayItems": 72,
+    "ok": true,
+    "error": "",
+    "ms": 976
+   }
+  },
+  {
+   "name": "四川省多式联运投资发展有限公司",
+   "url": "http://www.scsdsly.com/newsjtxx.aspx?category_id=14&yiid=34&erid=38",
+   "status": "blocked",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "HTTP 500",
+   "checkedAt": "2026-10-09T19:31:40.150620+08:00",
+   "seq": 86,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:40.150633+08:00",
+    "replay": "skipped:blocked",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "首创环保电子商务平台",
+   "url": "https://ecp.capitalwater.cn/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://ecp.capitalwater.cn/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 59,
+   "newest": "2026-10-09",
+   "within7d": 49,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:40.150638+08:00",
+   "seq": 87,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:40.150643+08:00",
+    "replay": "strict",
+    "replayItems": 59,
+    "ok": true,
+    "error": "",
+    "ms": 5503
+   }
+  },
+  {
+   "name": "招商局集团电子招标采购交易平台",
+   "url": "https://dzzb.ciesco.com.cn/gg/cgggList.do",
+   "status": "blocked",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "HTTP 403",
+   "checkedAt": "2026-10-09T19:31:45.654284+08:00",
+   "seq": 88,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:45.654298+08:00",
+    "replay": "skipped:blocked",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "大唐集团电子商务平台",
+   "url": "https://www.cdt-ec.com/notice/moreController/toMore?globleType=4",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到1个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:45.654304+08:00",
+   "seq": 89,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:45.654309+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "国铁采购平台",
+   "url": "https://cg.95306.cn/baseinfor/notice/procurementNotice?bidType=&noticeType=000&transactionType=01&wzType=&title=&bidding=&navigation=",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://cg.95306.cn/proxy/portal/elasticSearch/queryProcurementNoticeList",
+   "extract": "json",
+   "tls": "strict",
+   "items": 10,
+   "newest": "2026-10-09",
+   "within7d": 10,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:45.654313+08:00",
+   "apiCall": {
+    "url": "https://cg.95306.cn/proxy/portal/elasticSearch/queryProcurementNoticeList",
+    "method": "POST",
+    "postData": "mhId=9f340ec55fe0edcead99be57d94a409a&projBidType=01&bidType=&noticeType=000&wzType=&title=&biddingProjCode=&createUnit=&sortCondition=0",
+    "recordsPath": "data.resultData.result",
+    "candidates": [
+     {
+      "url": "https://cg.95306.cn/proxy/portal/elasticSearch/queryProcurementNoticeList",
+      "method": "POST",
+      "recordsPath": "data.resultData.result",
+      "items": 10
+     }
+    ]
+   },
+   "firstSample": {
+    "title": "格尔木电务段“格尔木南驼峰场减速器作业平台整治”施工项目采购公告变更",
+    "date": "2026-10-09",
+    "url": "https://cg.95306.cn/proxy/portal/elasticSearch/queryProcurementNoticeList"
+   },
+   "seq": 90,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:45.654319+08:00",
+    "replay": "",
+    "replayItems": 0,
+    "ok": false,
+    "error": "HTTPStatusError: Client error '400 ' for url 'https://cg.95306.cn/proxy/portal/elasticSearch/queryProcurementNoticeList'\nFor more informa"
+   }
+  },
+  {
+   "name": "白酒投集团（泸州）",
+   "url": "http://www.lzbjtjt.com/web/category/info/28",
+   "status": "blocked",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "HTTP 405",
+   "checkedAt": "2026-10-09T19:31:45.784129+08:00",
+   "seq": 91,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:45.784156+08:00",
+    "replay": "skipped:blocked",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "金采网（金融采购）",
+   "url": "http://www.cfcpn.com/",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "http://www.cfcpn.com/jcw/noticeinfo/noticeInfo/indexLatestNoticeList",
+   "extract": "json",
+   "tls": "strict",
+   "items": 5,
+   "newest": "2026-10-09",
+   "within7d": 5,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:45.784164+08:00",
+   "apiCall": {
+    "url": "http://www.cfcpn.com/jcw/noticeinfo/noticeInfo/indexLatestNoticeList",
+    "method": "POST",
+    "postData": "noticeType=2",
+    "recordsPath": "items",
+    "candidates": [
+     {
+      "url": "http://www.cfcpn.com/jcw/noticeinfo/noticeInfo/indexLatestNoticeList",
+      "method": "POST",
+      "recordsPath": "$",
+      "items": 5
+     },
+     {
+      "url": "http://www.cfcpn.com/jcw/noticeinfo/noticeInfo/indexLatestNoticeList",
+      "method": "POST",
+      "recordsPath": "$",
+      "items": 5
+     },
+     {
+      "url": "http://www.cfcpn.com/jcw/noticeinfo/noticeInfo/indexLatestNoticeList",
+      "method": "POST",
+      "recordsPath": "$",
+      "items": 5
+     },
+     {
+      "url": "http://www.cfcpn.com/jcw/interindustryexchange/manageInterIndustryExchange/indexTradeList",
+      "method": "POST",
+      "recordsPath": "$",
+      "items": 3
+     },
+     {
+      "url": "http://www.cfcpn.com/jcw/noticeinfo/noticeInfo/indexLatestNoticeList",
+      "method": "POST",
+      "recordsPath": "$",
+      "items": 3
+     }
+    ],
+    "recordMap": {
+     "title": "noticeTitle",
+     "date": "publishTime",
+     "url": "",
+     "id": "id"
+    },
+    "urlBase": "http://www.cfcpn.com"
+   },
+   "firstSample": {
+    "title": "中国建设银行湖北省分行武汉生产园区2027-2029年高低压变配电维保服务采购项目市场调研公告",
+    "date": "2026-10-09",
+    "url": "http://www.cfcpn.com/jcw/noticeinfo/noticeInfo/indexLatestNoticeList"
+   },
+   "seq": 92,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:45.784176+08:00",
+    "replay": "",
+    "replayItems": 5,
+    "ok": true,
+    "error": "",
+    "ms": 2542
+   }
+  },
+  {
+   "name": "中国国际西部博览城",
+   "url": "https://www.wciexpo.com/#/news/index",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到2个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:48.326946+08:00",
+   "seq": 93,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:48.326973+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "眉山天府新区自主招标采购平台",
+   "url": "https://zc.msttjt.com/index/biao/biao1.html",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://zc.msttjt.com/prod-api/v1/index",
+   "extract": "json",
+   "tls": "strict",
+   "items": 47,
+   "newest": "2026-10-09",
+   "within7d": 5,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:48.326983+08:00",
+   "apiCall": {
+    "url": "https://zc.msttjt.com/prod-api/v1/index",
+    "method": "POST",
+    "postData": "",
+    "recordsPath": "data.changeNotice",
+    "candidates": [
+     {
+      "url": "https://zc.msttjt.com/prod-api/v1/index",
+      "method": "POST",
+      "recordsPath": "data.changeNotice",
+      "items": 47
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "createTime",
+     "url": "",
+     "id": "uuid"
+    },
+    "urlBase": "https://zc.msttjt.com"
+   },
+   "firstSample": {
+    "title": "【变更公告】一期2025年四川重点区域全色、多光谱遥感存档数据采购项目",
+    "date": "2026-08-25",
+    "url": "https://zc.msttjt.com/prod-api/v1/index"
+   },
+   "seq": 94,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:48.326993+08:00",
+    "replay": "",
+    "replayItems": 9,
+    "ok": true,
+    "error": "",
+    "ms": 319
+   }
+  },
+  {
+   "name": "“应进必进 阳光交易”农村三资数字交易平台",
+   "url": "https://zc.cdaee.com:18080/ygcg/",
+   "status": "list_ok",
+   "transport": "http",
+   "list_url": "https://zc.cdaee.com:18080/ygcg/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 51,
+   "newest": "2026-06-01",
+   "within7d": 0,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:48.646939+08:00",
+   "seq": 95,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:48.646972+08:00",
+    "replay": "strict",
+    "replayItems": 51,
+    "ok": true,
+    "error": "",
+    "ms": 83
+   }
+  },
+  {
+   "name": "重庆市公共资源交易中心",
+   "url": "https://www.cqggzy.com/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://www.cqggzy.com/",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 3,
+   "newest": "2026-10-09",
+   "within7d": 3,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:48.730096+08:00",
+   "seq": 96,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:48.730109+08:00",
+    "replay": "strict",
+    "replayItems": 3,
+    "ok": true,
+    "error": "",
+    "ms": 919
+   }
+  },
+  {
+   "name": "重庆市网上中介服务超市",
+   "url": "https://zjcs.cqggzy.com/cq-zjcs-pub/home",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://zjcs.cqggzy.com/cq-zjcs-pub/purchaseNotice",
+   "extract": "table_row",
+   "tls": "strict",
+   "items": 4,
+   "newest": "2026-10-09",
+   "within7d": 4,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:49.649279+08:00",
+   "seq": 97,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:49.649292+08:00",
+    "replay": "strict",
+    "replayItems": 4,
+    "ok": true,
+    "error": "",
+    "ms": 209
+   }
+  },
+  {
+   "name": "重庆招标网",
+   "url": "https://chongqing.zhaobiao.cn/psearch/Dqsearch",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://chongqing.zhaobiao.cn/bid_500000_1_bidding.html",
+   "extract": "table_row",
+   "tls": "strict",
+   "items": 27,
+   "newest": "2026-10-09",
+   "within7d": 27,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:49.858905+08:00",
+   "seq": 98,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:49.858924+08:00",
+    "replay": "strict",
+    "replayItems": 27,
+    "ok": true,
+    "error": "",
+    "ms": 300
+   }
+  },
+  {
+   "name": "第四产权",
+   "url": "https://www.dscq.com/",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "验证码",
+   "checkedAt": "2026-10-09T19:31:50.159484+08:00",
+   "seq": 99,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:50.159498+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "比亚迪股份有限公司",
+   "url": "https://spcn.byd.com/#/tender-notice",
+   "status": "verified",
+   "transport": "json",
+   "list_url": "https://spcn.byd.com/api/srm-sou-sp/supplier/supplier/queryTenderAnnouncementInfoList",
+   "extract": "json",
+   "tls": "strict",
+   "items": 17,
+   "newest": "2026-10-09",
+   "within7d": 3,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:50.159503+08:00",
+   "apiCall": {
+    "url": "https://spcn.byd.com/api/srm-sou-sp/supplier/supplier/queryTenderAnnouncementInfoList",
+    "method": "POST",
+    "postData": "{\"country\":\"\",\"status\":\"ONGOING\",\"keyword\":\"\"}",
+    "recordsPath": "data",
+    "candidates": [
+     {
+      "url": "https://spcn.byd.com/api/srm-sou-sp/supplier/supplier/queryTenderAnnouncementInfoList",
+      "method": "POST",
+      "recordsPath": "data",
+      "items": 17
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "tenderNoticePublishTime",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://spcn.byd.com"
+   },
+   "firstSample": {
+    "title": "20260930  新技术院 IRC资产出售招标（原项目号CNT2608006075）",
+    "date": "2026-10-09",
+    "url": "https://spcn.byd.com/api/srm-sou-sp/supplier/supplier/queryTenderAnnouncementInfoList"
+   },
+   "seq": 100,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:50.159511+08:00",
+    "replay": "",
+    "replayItems": 100,
+    "ok": true,
+    "error": "",
+    "ms": 549
+   }
+  },
+  {
+   "name": "国轩高科",
+   "url": "https://www.gotion.com.cn/news/announcement.html",
+   "status": "blocked",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "HTTP 404",
+   "checkedAt": "2026-10-09T19:31:50.709101+08:00",
+   "seq": 101,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:50.709124+08:00",
+    "replay": "skipped:blocked",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "亿纬锂能",
+   "url": "https://srm.evebattery.com:8089/ForePage/Default.aspx#",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "验证码",
+   "checkedAt": "2026-10-09T19:31:50.709132+08:00",
+   "seq": 102,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:50.709139+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "立讯精密",
+   "url": "https://jgrfiszv0p62.cp.xiekeyun.com/home",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到51个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:50.709145+08:00",
+   "seq": 103,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:50.709152+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "长安汽车电子采购平台",
+   "url": "http://www.changanjyzx.com/information?information=26&pageSize=15&pageNumber=1",
+   "status": "blocked",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "HTTP 468",
+   "checkedAt": "2026-10-09T19:31:50.709157+08:00",
+   "seq": 104,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:50.709164+08:00",
+    "replay": "skipped:blocked",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "航天电子采购平台",
+   "url": "https://www.ispacechina.com/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://www.ispacechina.com/zxdt/gjzbgg/index.htm",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 1,
+   "newest": "2026-10-09",
+   "within7d": 1,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:50.709169+08:00",
+   "seq": 105,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:50.709177+08:00",
+    "replay": "strict",
+    "replayItems": 1,
+    "ok": true,
+    "error": "",
+    "ms": 188
+   }
+  },
+  {
+   "name": "通用技术采购中心",
+   "url": "https://cg.gt.cn/",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://cg.gt.cn/",
+   "extract": "li_item",
+   "tls": "strict",
+   "items": 81,
+   "newest": "2026-10-09",
+   "within7d": 50,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:50.897261+08:00",
+   "seq": 106,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:50.897281+08:00",
+    "replay": "strict",
+    "replayItems": 81,
+    "ok": true,
+    "error": "",
+    "ms": 262
+   }
+  },
+  {
+   "name": "水发集团阳光智采e平台",
+   "url": "https://sdsfzbcg.sdsf.com.cn/#/login-entry",
+   "status": "manual",
+   "transport": "",
+   "list_url": "",
+   "extract": "",
+   "tls": "strict",
+   "items": 0,
+   "newest": "",
+   "within7d": 0,
+   "note": "监听到21个JSON响应但无可识别公告数组",
+   "checkedAt": "2026-10-09T19:31:51.159324+08:00",
+   "seq": 107,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:51.159339+08:00",
+    "replay": "skipped:manual",
+    "replayItems": 0,
+    "ok": false,
+    "error": ""
+   }
+  },
+  {
+   "name": "新疆交通投资集团有限责任公司",
+   "url": "https://zhaocai.xjjttzjt.cn:8052/#/web/announcement/info-new?id=8586&type=bidding-announcement&category=original&bidsType=compete",
+   "status": "list_ok",
+   "transport": "json",
+   "list_url": "https://zhaocai.xjjttzjt.cn:8052/api/bidding/projectsectionannouncement/rel/page?announcementId=8586&size=5&current=1",
+   "extract": "json",
+   "tls": "strict",
+   "items": 1,
+   "newest": "2026-07-21",
+   "within7d": 0,
+   "note": "接口不返回详情链接，需人工确认详情页 URL 规则",
+   "checkedAt": "2026-10-09T19:31:51.159344+08:00",
+   "apiCall": {
+    "url": "https://zhaocai.xjjttzjt.cn:8052/api/bidding/projectsectionannouncement/rel/page?announcementId=8586&size=5&current=1",
+    "method": "GET",
+    "postData": "",
+    "recordsPath": "data.records",
+    "candidates": [
+     {
+      "url": "https://zhaocai.xjjttzjt.cn:8052/api/bidding/projectsectionannouncement/rel/page?announcementId=8586&size=5&current=1",
+      "method": "GET",
+      "recordsPath": "data.records",
+      "items": 1
+     }
+    ],
+    "recordMap": {
+     "title": "title",
+     "date": "exportTime",
+     "url": "",
+     "id": ""
+    },
+    "urlBase": "https://zhaocai.xjjttzjt.cn:8052"
+   },
+   "firstSample": {
+    "title": "新疆公路工程监理中心有限责任公司实习生团体意外伤害保险采购项目项目异常公告",
+    "date": "2026-07-21",
+    "url": "https://zhaocai.xjjttzjt.cn:8052/api/bidding/projectsectionannouncement/rel/page?announcementId=8586&size=5&current=1"
+   },
+   "seq": 108,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:51.159351+08:00",
+    "replay": "",
+    "replayItems": 1,
+    "ok": true,
+    "error": "",
+    "ms": 294
+   }
+  },
+  {
+   "name": "成都高新未来科技城发展集团有限公司",
+   "url": "https://www.cdhtkjc.com/Procurement.html",
+   "status": "verified",
+   "transport": "http",
+   "list_url": "https://www.cdhtkjc.com/Procurement.html",
+   "extract": "anchor_date",
+   "tls": "strict",
+   "items": 9,
+   "newest": "2026-10-09",
+   "within7d": 2,
+   "note": "",
+   "checkedAt": "2026-10-09T19:31:51.453741+08:00",
+   "seq": 109,
+   "verify": {
+    "verifiedAt": "2026-10-09T19:31:51.453778+08:00",
+    "replay": "strict",
+    "replayItems": 9,
+    "ok": true,
+    "error": "",
+    "ms": 696
+   }
+  }
+ ]
+}

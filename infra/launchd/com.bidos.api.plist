@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  BidOS 开机常驻 · 后端 API + 定时采集
+
+  【安装前必须改这三处__PROJECT_ROOT__ / __PYTHON__ / __DATABASE_URL__】
+  部署脚本 install.sh 会自动替换，一般不需要手工改。
+
+  改完这个文件后如果改了 tender_details.py 之类被常驻进程加载的代码，
+  必须重启，否则旧代码会静默覆盖你的回填：
+      launchctl kickstart -k "gui/$(id -u)/com.bidos.api"
+
+  日志：/tmp/bidos_api.log
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.bidos.api</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__PYTHON__</string>
+    <string>__PROJECT_ROOT__/scripts/desktop_api.py</string>
+  </array>
+  <key>WorkingDirectory</key><string>__PROJECT_ROOT__</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PYTHONPATH</key><string>__PROJECT_ROOT__/apps/api</string>
+    <key>PYTHONUNBUFFERED</key><string>1</string>
+    <key>TZ</key><string>Asia/Shanghai</string>
+    <key>BIDOS_DATA_MODE</key><string>postgres</string>
+    <key>DATABASE_URL</key><string>__DATABASE_URL__</string>
+    <key>BIDOS_ORGANIZATION_ID</key><string>org_xiangneng</string>
+    <!-- 每 30 分钟重扫一遍公告，补齐模型没抽到的字段 -->
+    <key>BIDOS_SCAN_CRON</key><string>*/30 * * * *</string>
+    <key>BIDOS_SCHEDULER_ENABLED</key><string>1</string>
+    <key>BIDOS_SCHEDULER_RUN_ON_START</key><string>0</string>
+    <key>BIDOS_SCHEDULER_SOURCES</key><string>0</string>
+    <key>BIDOS_SCHEDULER_TZ</key><string>Asia/Shanghai</string>
+    <!-- 工作正本目录：共享盘优先，未挂载时自动回退到桌面同名目录 -->
+    <key>BIDOS_WORKBOOK_DIR</key><string>__WORKBOOK_DIR__</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>10</integer>
+  <key>StandardOutPath</key><string>/tmp/bidos_api.log</string>
+  <key>StandardErrorPath</key><string>/tmp/bidos_api.log</string>
+</dict>
+</plist>

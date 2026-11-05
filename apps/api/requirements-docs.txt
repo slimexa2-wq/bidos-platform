@@ -1,0 +1,3 @@
+# Optional heavy document stack, normally installed in worker image.
+docling>=2.70,<3
+sentence-transformers>=3.3,<4

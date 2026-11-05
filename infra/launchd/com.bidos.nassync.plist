@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  BidOS 开机常驻 · Excel 双向同步看护（Excel ↔ 系统联动就是靠它）
+
+  每 60 秒跑一轮 scripts/nas_sync.py，一轮里完成两个方向：
+    系统改 → 写回 Excel（writeback）
+    Excel 改 → 回灌数据库（read）
+
+  ★所以「改表后系统多久更新」的答案就是这个 60 秒。
+
+  日志：/tmp/bidos_nas_sync.out（结构化状态）
+        /tmp/bidos_nas_sync.log （异常堆栈）
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.bidos.nassync</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__PYTHON__</string>
+    <string>__PROJECT_ROOT__/scripts/nas_sync.py</string>
+  </array>
+  <key>WorkingDirectory</key><string>__PROJECT_ROOT__</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PYTHONPATH</key><string>__PROJECT_ROOT__/apps/api</string>
+    <key>PYTHONUNBUFFERED</key><string>1</string>
+    <key>TZ</key><string>Asia/Shanghai</string>
+    <key>DATABASE_URL</key><string>__DATABASE_URL__</string>
+    <key>BIDOS_WORKBOOK_DIR</key><string>__WORKBOOK_DIR__</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>StartInterval</key><integer>60</integer>
+  <key>StandardOutPath</key><string>/tmp/bidos_nas_sync.out</string>
+  <key>StandardErrorPath</key><string>/tmp/bidos_nas_sync.log</string>
+</dict>
+</plist>

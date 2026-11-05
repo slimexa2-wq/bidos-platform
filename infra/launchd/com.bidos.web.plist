@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  BidOS 开机常驻 · 前端（局域网可访问）
+
+  局域网访问开关：__LAN_HOST__
+    0.0.0.0   = 允许同一局域网的同事访问（http://<本机IP>:5173）  ← 默认
+    127.0.0.1 = 只允许本机访问
+
+  ★只在本机、且不需要别人访问时改成 127.0.0.1（更安全）。
+  ★如果同事打开后连不上，八成是macOS 防火墙拦了，见部署文档「局域网访问」一节。
+
+  日志：/tmp/bidos_web.log
+  注意：这是 vite 开发服务器（热更新），改前端源码无需 build，保存即生效。
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.bidos.web</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__NODE__</string>
+    <string>__PROJECT_ROOT__/apps/web/node_modules/vite/bin/vite.js</string>
+    <string>--port</string><string>__WEB_PORT__</string>
+    <string>--host</string><string>__LAN_HOST__</string>
+    <string>--strictPort</string>
+  </array>
+  <key>WorkingDirectory</key><string>__PROJECT_ROOT__/apps/web</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>BIDOS_LAN_HOST</key><string>__LAN_HOST__</string>
+    <key>BIDOS_WEB_PORT</key><string>__WEB_PORT__</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>10</integer>
+  <key>StandardOutPath</key><string>/tmp/bidos_web.log</string>
+  <key>StandardErrorPath</key><string>/tmp/bidos_web.log</string>
+</dict>
+</plist>

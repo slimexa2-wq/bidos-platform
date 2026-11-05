@@ -1,0 +1,97 @@
+# writeback_columns.yaml — BidOS → 共享盘 Excel 回写列映射
+#
+# 作用对象：盲投项目信息收集汇总表2026 的月表（sheet 名 ^\d{1,2}月$）。
+# 实测基线（2026-09-30，文件 盲投项目信息 收集汇总表2026(3).xlsx）：
+#   - 全部 9 个月表表头行都在第 2 行（第 1 行是标题「盲投项目信息收集汇总表MMDD」），
+#     表头行仍由 header_locate 按锚点动态识别，不硬编码行号；
+#   - 各月表头存在变体：1–3月用「报名参与情况统计」「备注」，4月起是
+#     「报名费用/信息筛选人/报名参与情况/未参与原因」；1–4月右侧还有同事的
+#     「中标单位 / 中标金额（万元）」列，6–8月 18 列有同事散落标注（中标/入库/C/Q）。
+#     因此：预留列区起点按每个 sheet 实际占用列动态计算；普通字段只按表头名精确
+#     定位，定位不到就 failed(column_not_found)，绝不改名、绝不覆写同事列。
+#
+# 本文件只被 scripts/excel_writeback.py 读取；改这里即改回写行为。
+
+version: 1
+
+sheet_name_regex: '^\d{1,2}月$'
+
+header_locate:
+  # 表头行识别：在 scan_rows 内找到同时包含以下锚点表头的行
+  anchor_headers: ["序号", "项目名称"]
+  scan_rows: 6
+
+# ---- BidOS 列区（每个月表右侧预留 5 列，首见创建，浅色标注） ----
+# 顺序即列区顺序；列定位一律按表头名，因此各月起点不同也不影响映射。
+bidos_columns:
+  participation_status: BidOS参与状态
+  not_participation_reason: BidOS未参与原因
+  follow_up_person: BidOS跟进人
+  remark: BidOS备注
+  writeback_time: BidOS回写时间
+  project_id: BidOS项目ID
+  winner: BidOS中标单位
+  award_amount: BidOS中标金额原文
+  publication: BidOS结果公布
+  result_url: BidOS结果公告网址
+
+bidos_header_style:
+  fill_rgb: "FFF4E5"        # 浅橙底
+  font_rgb: "8A5A00"        # 深棕字
+  bold: true
+  width: 22
+  comment: "BidOS 系统回写与稳定定位列，按列名识别；原表业务字段可通过系统编辑同步。"
+
+# ---- 普通字段 → 源表列头名 ----
+# 逻辑字段名与源表列头名一致的直接按名定位；列表值是「该字段在该表可能出现的
+# 已存在表头名」按序精确匹配（只匹配既有列头，不会创建/改写同事列）。
+normal_fields:
+  序号: ["序号"]
+  项目区域: ["项目区域"]
+  项目类型: ["项目类型"]
+  招标时间: ["招标时间"]
+  报名截止时间: ["报名截止时间"]
+  开标时间: ["开标时间"]
+  甲方名称: ["甲方名称"]
+  代理机构: ["代理机构"]
+  项目名称: ["项目名称"]
+  招标金额: ["招标金额"]
+  服务期限: ["服务期限"]
+  项目情况简述: ["项目情况简述"]
+  招标公告网址: ["招标公告网址"]
+  报名费用: ["报名费用"]
+  信息筛选人: ["信息筛选人"]
+  报名参与情况: ["报名参与情况", "报名参与情况统计"]
+  未参与原因: ["未参与原因", "备注"]
+
+# ---- candidate_promotion 新行规则 ----
+promotion:
+  status_value: 待评估          # BidOS参与状态 固定值
+  remark_prefix: "AI收集"         # BidOS备注 = 前缀·渠道（无渠道则只有前缀）
+  # candidate_row 键 → 去向：sheet 列头（按 normal_fields/表头精确匹配）或列区角色
+  candidate_key_routes:
+    项目区域: header:项目区域
+    项目类型: header:项目类型
+    招标时间: header:招标时间
+    报名截止时间: header:报名截止时间
+    项目情况简述: header:项目情况简述
+    报名参与情况: header:报名参与情况
+    项目名称: header:项目名称
+    甲方名称: header:甲方名称
+    代理机构: header:代理机构
+    招标金额: header:招标金额
+    服务期限: header:服务期限
+    报名费用: header:报名费用
+    招标公告网址: header:招标公告网址
+    开标时间: header:开标时间
+    渠道: bidos:remark_channel     # 源表无「渠道」列 → 并入 BidOS备注，绝不另造列
+  # candidate_row 里未登记的键一律忽略（宁丢不造）
+
+# ---- 安全闸 ----
+safety:
+  # 行指针一致性闸：编辑目标行的「项目名称」与 projects.name 归一化后
+  # 双向包含 或 difflib ratio ≥ 阈值 才放行；单元格为空则无法核验，放行并记日志。
+  name_ratio: 0.80
+  backup_dir: /Users/mini/workbuddy-ai/招投标开发/blind_collect/excel_backups
+  backup_keep: 20                  # 每个源文件保留最近 N 份备份
+  writeback_time_format: "%Y-%m-%d %H:%M:%S"

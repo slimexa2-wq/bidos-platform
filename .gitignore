@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+*.tsbuildinfo
+.env
+.env.local
+.DS_Store
+.pytest_cache/
+.venv311/
+
+# 质检修复：tsc -b 曾在 apps/web/ 就地生成 vite.config.js/.d.ts，
+# 而 vite 解析配置时 .js 优先于 .ts —— 会静默遮蔽真实配置（dev 代理因此失效）。
+# 这两类文件属构建产物，禁止入库。
+apps/web/vite.config.js
+apps/web/vite.config.d.ts
+apps/web/vite.config.js.map

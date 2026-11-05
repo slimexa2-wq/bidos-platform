@@ -1,0 +1,15 @@
+# Install in real-data deployment in addition to requirements.txt.
+psycopg[binary]>=3.2,<4
+SQLAlchemy>=2.0,<3
+redis>=5.2,<6
+celery>=5.4,<6
+httpx>=0.28,<1
+PyYAML>=6.0,<7
+# Excel 读取与经授权的字段同步；工作记录采用局部 XML 写入以保留原表附件。
+openpyxl>=3.1,<4
+lxml>=5,<7
+# 定时采集 / 事件扫描的调度宿主（apps/api/app/services/scheduler.py）
+# 此前 config/sources.yaml 里每个源都写了 schedule，但全库没有调度宿主 —— cron 表达式是装饰性的。
+# 注意：scheduler.py 是**惰性导入**，缺这个包不会报错，只会静默降级成「调度不可用」，
+# 所以必须在这里显式声明，否则新环境装完功能是死的却看不出问题。
+apscheduler>=3.10,<4
