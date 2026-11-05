@@ -1,22 +1,22 @@
-# Execution Plan
+1. **Create the `one_page_go_nogo_card_cli_one_click.py` module in `ultra_modules`.**
+   - Implement the `GoNoGoCardGenerator` class containing the core logic as pure functions.
+   - It should accept a bid document (e.g., plain text or mock data structure) and output a one-page Go/No-Go decision card.
+   - The decision card should contain fields like project name, key dates, estimated value, requirements, and a final AI recommendation (Go, No-Go, or Caution).
+   - Follow the "Complex Backend, Minimalist Frontend" principle: zero configuration, default parameters, dirty data self-healing, and auto-fallback.
+   - The CLI adapter should be simple to use, outputting in both JSON and Mock Excel formats.
 
-1.  **Add `num2cn` function**: Add a helper function to convert numerical amounts to Chinese uppercase amounts (e.g., `12345.67` -> `壹万贰仟叁佰肆拾伍元陆角柒分`) in `apps/api/app/services/bid_document_check.py`.
-2.  **Add Rules to `RULE_NAMES`**: In `bid_document_check.py`, add the following rules:
-    *   `project_name_consistency`: Check if the project name in the document matches `meta.project_name`.
-    *   `project_number_consistency`: Check if the project number in the document matches `meta.project_number`.
-    *   `amount_uppercase_consistency`: Check if the uppercase amount matches the calculated uppercase of `meta.amount`.
-    *   `sub_amount_consistency`: Check if the sum of all matched sub-amounts equals the total `meta.amount`.
-    *   `period_consistency`: Check if the construction period matches `meta.period`.
-    *   `manager_consistency`: Check if the project manager name and ID match `meta.manager_name` and `meta.manager_id`.
-3.  **Define Regular Expressions**: Create compiled regexes in `bid_document_check.py` for matching project name, project number, uppercase amounts, sub-amounts, period, and manager info.
-4.  **Implement Check Methods**: Add the corresponding `_check_...` methods in `DocumentChecker` class.
-    *   `_check_project_name`: Finds `项目名称[：:]\s*(.+)` and compares.
-    *   `_check_project_number`: Finds `项目编号[：:]\s*(.+)` and compares.
-    *   `_check_amount_uppercase`: Checks `_AMOUNT_UPPERCASE` regex against `num2cn(meta.amount)`.
-    *   `_check_sub_amounts`: Looks for table-like patterns or "分项报价" and extracts numbers. Actually, checking if all sub-amounts sum up properly might require extracting amounts right before "合计" and comparing.
-    *   `_check_period`: Finds `(?:工期|服务期限?)[：:]\s*(.+)` and compares.
-    *   `_check_manager`: Finds `(?:项目经理|项目负责人)[：:]\s*(.+)` and `(?:身份证号?码?)[：:]\s*([0-9X]{18})`.
-5.  **Update `check` method**: Add the new methods to the `check` function if the corresponding rule is enabled.
-6.  **Create tests**: Create `tests/backend/test_bid_document_check_consistency.py` to ensure all 6 new consistency rules are working and tested against positive and negative cases.
-7.  **Pre-commit checks**: Run `pre_commit_instructions` before submitting.
-8.  **Submit**: Commit the changes.
+2. **Create the `test_one_page_go_nogo_card_cli_one_click.py` in `tests/ultra_modules`.**
+   - Write at least 5 test cases using `unittest`.
+   - Cover normal cases, dirty data self-healing, missing parameters (default fallback), and extreme boundaries.
+   - Ensure 100% branch coverage (or as close as possible) for the core logic.
+
+3. **Verify the implementation by running tests.**
+   - Execute `python3 -m unittest discover -s tests/ultra_modules` locally.
+   - Iterate on the code until all tests pass.
+
+4. **Complete pre-commit steps.**
+   - Run `pre_commit_instructions` and follow the provided instructions to ensure proper testing, verification, review, and reflection are done.
+
+5. **Commit and Submit.**
+   - Once all tests pass and pre-commit checks are done, create a descriptive commit message.
+   - Push to a branch and submit the PR.
