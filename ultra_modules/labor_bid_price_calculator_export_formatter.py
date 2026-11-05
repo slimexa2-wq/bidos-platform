@@ -1,97 +1,129 @@
 import csv
-import io
 import math
-import logging
-from ultra_modules.labor_bid_price_calculator_core_engine import calculate_labor_bid
+from typing import Any, Dict, List
 
-logger = logging.getLogger(__name__)
-
-def silent_audit_log(action, detail):
-    """Silently record every action for backend review without cluttering frontend."""
-    logger.info(f"AUDIT TRACE: {action} - {detail}")
-
-def sanitize_value(val):
-    if val is None:
-        silent_audit_log("Data Repair", "Replaced None with 0.0")
-        return 0.0
-    if isinstance(val, (float, int)):
-        if math.isnan(val):
-            silent_audit_log("Data Repair", "Replaced NaN with 0.0")
-            return 0.0
-        return float(val)
-    if isinstance(val, str):
+def _clean_numeric(value: Any, default: float, field_name: str, audit_log: List[str]) -> float:
+    """Cleans numeric input with silent fault tolerance."""
+    if value is None:
+        audit_log.append(f"Field '{field_name}' is None, applying default {default}.")
+        return default
+    if isinstance(value, str):
+        if value.strip().lower() in ('nan', 'none', 'null', ''):
+            audit_log.append(f"Field '{field_name}' is '{value}', applying default {default}.")
+            return default
         try:
-            cleaned = val.replace(',', '').replace('%', '')
-            fval = float(cleaned)
-            if math.isnan(fval):
-                silent_audit_log("Data Repair", f"Replaced NaN (from string '{val}') with 0.0")
-                return 0.0
-            silent_audit_log("Data Conversion", f"Converted string '{val}' to {fval}")
-            return fval
-        except Exception:
-            silent_audit_log("Data Repair", f"Replaced invalid string '{val}' with 0.0")
-            return 0.0
-    silent_audit_log("Data Repair", f"Replaced unsupported type {type(val)} with 0.0")
-    return 0.0
+            value = float(value)
+        except ValueError:
+            audit_log.append(f"Field '{field_name}' cannot be parsed as float, applying default {default}.")
+            return default
 
-def format_export_data(raw_data):
-    clean_data = {}
-    if not isinstance(raw_data, dict):
-        silent_audit_log("Data Repair", "raw_data is not a dict, assigning default empty dict")
-        raw_data = {}
+    if isinstance(value, (int, float)):
+        if math.isnan(value):
+            audit_log.append(f"Field '{field_name}' is NaN, applying default {default}.")
+            return default
+        if value < 0:
+            audit_log.append(f"Field '{field_name}' is negative ({value}), correcting to absolute value.")
+            return float(abs(value))
+        return float(value)
 
-    keys_to_export = [
-        'total_salary', 'actual_ss_base', 'social_security_cost',
-        'actual_pf_base', 'provident_fund_cost', 'disabled_fund_cost',
-        'total_cost_before_tax', 'tax', 'total_cost', 'margin',
-        'margin_rate', 'calculated_bid_price'
-    ]
+    audit_log.append(f"Field '{field_name}' is of unsupported type {type(value).__name__}, applying default {default}.")
+    return default
 
-    for key in keys_to_export:
-        val = raw_data.get(key, 0.0)
-        clean_data[key] = sanitize_value(val)
+def calculate_labor_bid(params: Dict[str, Any], audit_log: List[str] = None) -> Dict[str, Any]:
+    """
+    Backward calculates gross profit from a given target total price and compliance costs.
+    Applies zero configuration fault tolerance and missing parameter fallback.
+    """
+    if audit_log is None:
+        audit_log = []
 
-    return clean_data
+    target_total_price = _clean_numeric(params.get('target_total_price'), 0.0, 'target_total_price', audit_log)
+    headcount_val = _clean_numeric(params.get('headcount'), 1.0, 'headcount', audit_log)
+    headcount = int(headcount_val)
+    if headcount == 0:
+        audit_log.append("Field 'headcount' is 0, applying default 1.")
+        headcount = 1
 
-def generate_export_csv_string(clean_data):
-    output = io.StringIO()
-    writer = csv.writer(output)
-    # Zero comments, just header and data
-    headers = list(clean_data.keys())
-    writer.writerow(headers)
-    writer.writerow([clean_data[k] for k in headers])
-    return output.getvalue()
+    months = _clean_numeric(params.get('months'), 12.0, 'months', audit_log)
+    if months == 0:
+        audit_log.append("Field 'months' is 0, applying default 12.0.")
+        months = 12.0
 
-def generate_minimal_report(clean_data):
-    # Exactly 3 lines for WeChat / Feishu report
-    bid_price = clean_data.get('calculated_bid_price', 0.0)
-    total_cost = clean_data.get('total_cost', 0.0)
-    margin = clean_data.get('margin', 0.0)
-    margin_rate = clean_data.get('margin_rate', 0.0) * 100
+    social_security = _clean_numeric(params.get('social_security_per_person_month'), 0.0, 'social_security_per_person_month', audit_log)
+    provident_fund = _clean_numeric(params.get('provident_fund_per_person_month'), 0.0, 'provident_fund_per_person_month', audit_log)
+    disability_fund = _clean_numeric(params.get('disability_fund_per_person_month'), 0.0, 'disability_fund_per_person_month', audit_log)
+    tax_rate = _clean_numeric(params.get('tax_rate'), 0.06, 'tax_rate', audit_log)
+    other_costs = _clean_numeric(params.get('other_costs'), 0.0, 'other_costs', audit_log)
 
-    line1 = f"【报价测算结果】投标总价：{bid_price:.2f}元"
-    line2 = f"【成本明细】总成本（含税费）：{total_cost:.2f}元"
-    line3 = f"【收益预估】毛利：{margin:.2f}元（毛利率：{margin_rate:.2f}%）"
+    # Calculate costs
+    person_months = headcount * months
+    total_social_security = social_security * person_months
+    total_provident_fund = provident_fund * person_months
+    total_disability_fund = disability_fund * person_months
+
+    # Total compliance costs
+    compliance_costs = total_social_security + total_provident_fund + total_disability_fund
+
+    # Backward calculate gross profit
+    total_revenue_ex_tax = target_total_price / (1.0 + tax_rate)
+    taxes = target_total_price - total_revenue_ex_tax
+
+    gross_profit = total_revenue_ex_tax - compliance_costs - other_costs
+    gross_profit_margin = (gross_profit / total_revenue_ex_tax) if total_revenue_ex_tax > 0 else 0.0
+
+    return {
+        'target_total_price': round(target_total_price, 2),
+        'headcount': headcount,
+        'months': round(months, 2),
+        'total_compliance_costs': round(compliance_costs, 2),
+        'total_social_security': round(total_social_security, 2),
+        'total_provident_fund': round(total_provident_fund, 2),
+        'total_disability_fund': round(total_disability_fund, 2),
+        'other_costs': round(other_costs, 2),
+        'taxes': round(taxes, 2),
+        'gross_profit': round(gross_profit, 2),
+        'gross_profit_margin': round(gross_profit_margin, 4)
+    }
+
+def generate_brief_report(result: Dict[str, Any]) -> str:
+    """Generates a 3-line minimalist summary for WeChat/Feishu."""
+    total = result.get('target_total_price', 0.0)
+    gp = result.get('gross_profit', 0.0)
+    margin = result.get('gross_profit_margin', 0.0) * 100.0
+    compliance = result.get('total_compliance_costs', 0.0)
+    taxes = result.get('taxes', 0.0)
+
+    line1 = f"💰 测算总价: {total:,.2f}元 (毛利: {gp:,.2f}元, 毛利率: {margin:.2f}%)"
+    line2 = f"🛡️ 合规底线: 社保公积金等共 {compliance:,.2f}元 (税费 {taxes:,.2f}元)"
+    line3 = f"👥 测算基准: {result.get('headcount', 0)}人 × {result.get('months', 0.0)}个月"
 
     return f"{line1}\n{line2}\n{line3}"
 
-def export_and_report(params=None):
-    if params is None:
-        silent_audit_log("Default Assignment", "Missing params, using empty dict")
-        params = {}
+def export_to_csv(result: Dict[str, Any], filepath: str, audit_log: List[str] = None) -> bool:
+    """Exports the result to a CSV file. Ensures comments=0 and no NaN/None."""
+    if audit_log is None:
+        audit_log = []
 
-    # Calculate base values using the core engine
-    raw_result = calculate_labor_bid(params)
+    try:
+        export_data = {}
+        for k, v in result.items():
+            if v is None:
+                export_data[k] = 0
+            elif isinstance(v, float) and math.isnan(v):
+                export_data[k] = 0
+            else:
+                export_data[k] = v
 
-    # Clean up and ensure no NaN/None
-    clean_data = format_export_data(raw_result)
+        # Force comments=0
+        export_data['comments'] = 0
 
-    # Generate CSV and Report
-    csv_string = generate_export_csv_string(clean_data)
-    report_string = generate_minimal_report(clean_data)
+        with open(filepath, mode='w', encoding='utf-8', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=list(export_data.keys()))
+            writer.writeheader()
+            writer.writerow(export_data)
 
-    return {
-        'clean_data': clean_data,
-        'csv_export': csv_string,
-        'report': report_string
-    }
+        audit_log.append(f"Successfully exported data to {filepath}.")
+        return True
+    except Exception as e:
+        audit_log.append(f"Failed to export data to {filepath}: {str(e)}")
+        return False

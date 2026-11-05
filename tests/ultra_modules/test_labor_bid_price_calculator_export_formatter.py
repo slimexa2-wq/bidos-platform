@@ -1,102 +1,173 @@
 import unittest
+import os
+import csv
 import math
+from unittest.mock import patch, mock_open
 from ultra_modules.labor_bid_price_calculator_export_formatter import (
-    sanitize_value,
-    format_export_data,
-    generate_export_csv_string,
-    generate_minimal_report,
-    export_and_report
+    _clean_numeric,
+    calculate_labor_bid,
+    generate_brief_report,
+    export_to_csv
 )
 
 class TestLaborBidPriceCalculatorExportFormatter(unittest.TestCase):
+    def setUp(self):
+        self.audit_log = []
+        self.test_csv_path = 'test_labor_bid_export.csv'
 
-    def test_normal_case(self):
-        # Setup typical parameters
+    def tearDown(self):
+        if os.path.exists(self.test_csv_path):
+            os.remove(self.test_csv_path)
+
+    def test_clean_numeric(self):
+        # Normal
+        self.assertEqual(_clean_numeric(10.5, 0.0, 'test', self.audit_log), 10.5)
+        # None
+        self.assertEqual(_clean_numeric(None, 1.0, 'test', self.audit_log), 1.0)
+        # Empty string
+        self.assertEqual(_clean_numeric("", 2.0, 'test', self.audit_log), 2.0)
+        # NaN string
+        self.assertEqual(_clean_numeric("NaN", 3.0, 'test', self.audit_log), 3.0)
+        # Invalid string
+        self.assertEqual(_clean_numeric("abc", 4.0, 'test', self.audit_log), 4.0)
+        # Valid string
+        self.assertEqual(_clean_numeric("5.5", 0.0, 'test', self.audit_log), 5.5)
+        # Negative number
+        self.assertEqual(_clean_numeric(-6.5, 0.0, 'test', self.audit_log), 6.5)
+        # float NaN
+        self.assertEqual(_clean_numeric(float('nan'), 7.0, 'test', self.audit_log), 7.0)
+        # unsupported type
+        self.assertEqual(_clean_numeric([], 8.0, 'test', self.audit_log), 8.0)
+
+    def test_calculate_labor_bid_normal(self):
         params = {
-            'base_salary': 5000,
-            'bonus': 1000,
-            'social_security_rate': 20,
-            'target_margin_rate': 10,
-            'tax_rate': 5
+            'target_total_price': 1060000,
+            'headcount': 10,
+            'months': 12,
+            'social_security_per_person_month': 1500,
+            'provident_fund_per_person_month': 500,
+            'disability_fund_per_person_month': 100,
+            'tax_rate': 0.06,
+            'other_costs': 20000
         }
-        result = export_and_report(params)
-        clean_data = result['clean_data']
-        self.assertEqual(clean_data['total_salary'], 6000.0)
-        self.assertIn("【报价测算结果】投标总价", result['report'])
-        self.assertIn("total_salary,actual_ss_base", result['csv_export'])
+        result = calculate_labor_bid(params, self.audit_log)
 
-    def test_missing_params(self):
-        # Test with None parameters (missing params fallback)
-        result = export_and_report(None)
-        clean_data = result['clean_data']
-        self.assertEqual(clean_data['total_salary'], 0.0)
-        self.assertEqual(clean_data['calculated_bid_price'], 0.0)
+        self.assertEqual(result['target_total_price'], 1060000)
+        self.assertEqual(result['headcount'], 10)
+        self.assertEqual(result['months'], 12.0)
 
-    def test_dirty_data_self_healing(self):
-        # 1. Test None value
-        self.assertEqual(sanitize_value(None), 0.0)
+        # 10 * 12 * (1500 + 500 + 100) = 120 * 2100 = 252000
+        self.assertEqual(result['total_compliance_costs'], 252000.0)
 
-        # 2. Test NaN value (float)
-        self.assertEqual(sanitize_value(float('nan')), 0.0)
+        # Ex tax: 1060000 / 1.06 = 1000000
+        # Taxes: 1060000 - 1000000 = 60000
+        self.assertEqual(result['taxes'], 60000.0)
 
-        # 3. Test string with commas and percents
-        self.assertEqual(sanitize_value("1,000.50"), 1000.50)
-        self.assertEqual(sanitize_value("15%"), 15.0)
+        # GP: 1000000 - 252000 - 20000 = 728000
+        self.assertEqual(result['gross_profit'], 728000.0)
+        self.assertEqual(result['gross_profit_margin'], 0.7280)
 
-        # 4. Test invalid string fallback to 0.0
-        self.assertEqual(sanitize_value("invalid_str"), 0.0)
-        self.assertEqual(sanitize_value("nan"), 0.0)
-
-        # 5. Test unsupported type fallback to 0.0
-        self.assertEqual(sanitize_value([]), 0.0)
-
-        # Test format_export_data with malformed raw_data
-        clean = format_export_data("not a dict")
-        self.assertEqual(clean['total_salary'], 0.0)
-
-        # Test format_export_data with dict containing None and NaN
-        raw = {'total_salary': None, 'margin': float('nan'), 'missing': 123}
-        clean2 = format_export_data(raw)
-        self.assertEqual(clean2['total_salary'], 0.0)
-        self.assertEqual(clean2['margin'], 0.0)
-
-    def test_extreme_boundaries(self):
-        # Massive numbers and edge case zeros
+    def test_calculate_labor_bid_missing_and_dirty_data(self):
+        # Missing critical params, NaN strings, negative values
         params = {
-            'base_salary': 1e9,
-            'target_margin_rate': 0,
-            'tax_rate': 0
+            'target_total_price': "NaN",
+            'headcount': -5,  # will be converted to 5
+            'months': 0,      # will default to 12.0
+            'social_security_per_person_month': None,
+            # provident fund missing entirely
+            'disability_fund_per_person_month': -100, # converted to 100
+            'tax_rate': "abc", # default 0.06
         }
-        result = export_and_report(params)
-        self.assertEqual(result['clean_data']['calculated_bid_price'], 1e9)
-        self.assertIn("投标总价：1000000000.00元", result['report'])
+        result = calculate_labor_bid(params, self.audit_log)
 
-    def test_report_and_csv_generation(self):
-        clean_data = {
-            'total_salary': 5000.0,
-            'actual_ss_base': 5000.0,
-            'social_security_cost': 1000.0,
-            'actual_pf_base': 5000.0,
-            'provident_fund_cost': 500.0,
-            'disabled_fund_cost': 100.0,
-            'total_cost_before_tax': 6600.0,
-            'tax': 330.0,
-            'total_cost': 6930.0,
-            'margin': 693.0,
-            'margin_rate': 0.10,
-            'calculated_bid_price': 7623.0
+        self.assertEqual(result['target_total_price'], 0.0)
+        self.assertEqual(result['headcount'], 5)
+        self.assertEqual(result['months'], 12.0)
+        self.assertEqual(result['total_social_security'], 0.0)
+        self.assertEqual(result['total_provident_fund'], 0.0)
+        # 5 * 12 * 100 = 6000
+        self.assertEqual(result['total_disability_fund'], 6000.0)
+        self.assertEqual(result['total_compliance_costs'], 6000.0)
+        self.assertEqual(result['taxes'], 0.0)
+        self.assertEqual(result['gross_profit'], -6000.0)
+        self.assertEqual(result['gross_profit_margin'], 0.0) # revenue ex tax is 0
+
+    def test_calculate_labor_bid_extreme_boundaries(self):
+        # Zero headcount gets defaulted to 1, very large total price
+        params = {
+            'target_total_price': 1e12,
+            'headcount': 0,
+            'months': 12,
+            'social_security_per_person_month': 0,
+            'provident_fund_per_person_month': 0,
+            'disability_fund_per_person_month': 0,
+            'tax_rate': 0.0,
+            'other_costs': 0
         }
+        result = calculate_labor_bid(params, self.audit_log)
 
-        report = generate_minimal_report(clean_data)
-        lines = report.split('\n')
-        self.assertEqual(len(lines), 3)
-        self.assertEqual(lines[0], "【报价测算结果】投标总价：7623.00元")
-        self.assertEqual(lines[1], "【成本明细】总成本（含税费）：6930.00元")
-        self.assertEqual(lines[2], "【收益预估】毛利：693.00元（毛利率：10.00%）")
+        self.assertEqual(result['headcount'], 1)
+        self.assertEqual(result['total_compliance_costs'], 0.0)
+        self.assertEqual(result['taxes'], 0.0)
+        self.assertEqual(result['gross_profit'], 1e12)
+        self.assertEqual(result['gross_profit_margin'], 1.0)
 
-        csv_str = generate_export_csv_string(clean_data)
-        self.assertIn("total_salary,actual_ss_base,social_security_cost,actual_pf_base,provident_fund_cost,disabled_fund_cost,total_cost_before_tax,tax,total_cost,margin,margin_rate,calculated_bid_price", csv_str)
-        self.assertIn("5000.0,5000.0,1000.0,5000.0,500.0,100.0,6600.0,330.0,6930.0,693.0,0.1,7623.0", csv_str)
+        # Provide no audit log array
+        result2 = calculate_labor_bid(params)
+        self.assertIsInstance(result2, dict)
+
+    def test_generate_brief_report(self):
+        result = {
+            'target_total_price': 1060000.5,
+            'gross_profit': 728000.0,
+            'gross_profit_margin': 0.728,
+            'total_compliance_costs': 252000.0,
+            'taxes': 60000.0,
+            'headcount': 10,
+            'months': 12.0
+        }
+        report = generate_brief_report(result)
+        self.assertIn("1,060,000.50", report)
+        self.assertIn("728,000.00", report)
+        self.assertIn("72.80%", report)
+        self.assertIn("252,000.00", report)
+        self.assertIn("60,000.00", report)
+        self.assertIn("10人 × 12.0个月", report)
+
+    def test_export_to_csv_success_and_sanitization(self):
+        result = {
+            'valid_param': 100,
+            'none_param': None,
+            'nan_param': float('nan'),
+            'string_param': 'test'
+        }
+        success = export_to_csv(result, self.test_csv_path, self.audit_log)
+        self.assertTrue(success)
+        self.assertTrue(os.path.exists(self.test_csv_path))
+
+        with open(self.test_csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+            self.assertEqual(len(rows), 1)
+            row = rows[0]
+            self.assertEqual(row['valid_param'], '100')
+            self.assertEqual(row['none_param'], '0')
+            self.assertEqual(row['nan_param'], '0')
+            self.assertEqual(row['string_param'], 'test')
+            self.assertEqual(row['comments'], '0') # Must force comments=0
+
+    @patch('builtins.open', new_callable=mock_open)
+    def test_export_to_csv_io_error(self, mock_file):
+        mock_file.side_effect = PermissionError("Permission denied")
+        result = {'test': 123}
+        success = export_to_csv(result, self.test_csv_path, self.audit_log)
+
+        self.assertFalse(success)
+        self.assertTrue(any("Permission denied" in log for log in self.audit_log))
+
+        # Test without passing audit_log explicitly
+        success2 = export_to_csv(result, self.test_csv_path)
+        self.assertFalse(success2)
 
 if __name__ == '__main__':
     unittest.main()
