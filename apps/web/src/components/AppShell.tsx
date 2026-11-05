@@ -26,6 +26,7 @@ export function AppShell(){
     </main>
     {/* §9.1：PC 与手机同一套能力。禁止 slice(0,5)——那会让结果复盘/保证金台账/竞对分析
         在手机上无任何入口（sidebar 在 ≤900px 被 display:none）。改为横向可滚动的完整导航。 */}
-    <nav className="mobile-nav">{nav.map(([label,to])=><NavLink key={to} to={to} end={to==='/'}>{label.replace('管理','').replace('信息','')}</NavLink>)}</nav>
+    <nav className="mobile-nav" aria-label="移动端导航">{[...nav, ['数据与自动化','/ops']].map(([label,to])=><NavLink key={to} to={to} end={to==='/'}>{label.replace('管理','').replace('信息','')}</NavLink>)}</nav>
   </div>
 }
+
