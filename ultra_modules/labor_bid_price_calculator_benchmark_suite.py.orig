@@ -1,0 +1,146 @@
+import time
+import math
+import logging
+from typing import Dict, Any, List, Optional
+import concurrent.futures
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class LaborBidPriceCalculator:
+    """
+    Labor bid price calculator (Social security/housing fund compliance, disabled fund, tax, gross profit reverse calculation)
+    Extremely simple UI/API design: simple input, automatic self-healing for missing/dirty data.
+    """
+
+    # Defaults
+    DEFAULT_BASE_SALARY = 5000.0
+    DEFAULT_SOCIAL_SECURITY_RATE = 0.28
+    DEFAULT_HOUSING_FUND_RATE = 0.12
+    DEFAULT_DISABLED_FUND_RATE = 0.015
+    DEFAULT_TAX_RATE = 0.06
+    DEFAULT_TARGET_GROSS_PROFIT = 0.10
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        if config is None:
+            config = {}
+
+        self.social_security_rate = self._safe_float(config.get("social_security_rate"), self.DEFAULT_SOCIAL_SECURITY_RATE)
+        self.housing_fund_rate = self._safe_float(config.get("housing_fund_rate"), self.DEFAULT_HOUSING_FUND_RATE)
+        self.disabled_fund_rate = self._safe_float(config.get("disabled_fund_rate"), self.DEFAULT_DISABLED_FUND_RATE)
+        self.tax_rate = self._safe_float(config.get("tax_rate"), self.DEFAULT_TAX_RATE)
+
+    def _safe_float(self, value: Any, default: float) -> float:
+        """Self-healing function to parse float from dirty data (nulls, strings, gibberish)."""
+        if value is None:
+            return default
+        try:
+            val = float(value)
+            if math.isnan(val) or math.isinf(val) or val < 0:
+                return default
+            return val
+        except (ValueError, TypeError):
+            return default
+
+    def calculate(self, base_salary: Any, target_gross_profit: Any = None) -> Dict[str, float]:
+        """
+        Calculate total cost and required bid price based on base salary.
+        """
+        salary = self._safe_float(base_salary, self.DEFAULT_BASE_SALARY)
+        profit_rate = self._safe_float(target_gross_profit, self.DEFAULT_TARGET_GROSS_PROFIT)
+
+        # Core Costs
+        social_security = salary * self.social_security_rate
+        housing_fund = salary * self.housing_fund_rate
+        disabled_fund = salary * self.disabled_fund_rate
+
+        total_personnel_cost = salary + social_security + housing_fund + disabled_fund
+
+        # Reverse calculate total price based on target gross profit and tax
+        # Let P be Total Price.
+        # Cost = total_personnel_cost
+        # Profit = P * profit_rate
+        # Tax = P * tax_rate
+        # P = Cost + Profit + Tax  =>  P - P*profit_rate - P*tax_rate = Cost
+        # P * (1 - profit_rate - tax_rate) = Cost
+        # P = Cost / (1 - profit_rate - tax_rate)
+
+        denominator = 1.0 - profit_rate - self.tax_rate
+
+        # Edge case: if rates sum to >= 1, we can't achieve it normally, fallback to standard markup
+        if denominator <= 0.01:
+            logger.warning("Unrealistic profit and tax rates, falling back to 20% markup.")
+            denominator = 0.8
+            profit_rate = 0.20 - self.tax_rate if (0.20 - self.tax_rate) > 0 else 0.10
+
+        total_price = total_personnel_cost / denominator
+        gross_profit = total_price * profit_rate
+        tax = total_price * self.tax_rate
+
+        return {
+            "base_salary": round(salary, 2),
+            "social_security": round(social_security, 2),
+            "housing_fund": round(housing_fund, 2),
+            "disabled_fund": round(disabled_fund, 2),
+            "total_personnel_cost": round(total_personnel_cost, 2),
+            "tax": round(tax, 2),
+            "gross_profit": round(gross_profit, 2),
+            "total_price": round(total_price, 2)
+        }
+
+
+class BenchmarkSuite:
+    """
+    Synthesizes datasets and runs performance benchmarks to verify millisecond responses and zero crashes.
+    """
+
+    @staticmethod
+    def generate_synthetic_fixtures() -> List[Dict[str, Any]]:
+        """
+        Creates edge cases: normal, nulls, empty strings, gibberish, extreme large values, etc.
+        """
+        return [
+            {"base_salary": 5000, "target_gross_profit": 0.1},
+            {"base_salary": None, "target_gross_profit": None},
+            {"base_salary": "8000", "target_gross_profit": "0.15"},
+            {"base_salary": "gibberish", "target_gross_profit": "NaN"},
+            {"base_salary": 9999999999.99, "target_gross_profit": 0.5},
+            {"base_salary": -500, "target_gross_profit": 1.5},  # Profit > 1 triggers fallback
+        ]
+
+    @classmethod
+    def run_benchmark(cls, concurrency: int = 100) -> Dict[str, Any]:
+        """
+        Run parallel calculations to verify performance and zero crashes.
+        """
+        calc = LaborBidPriceCalculator()
+        fixtures = cls.generate_synthetic_fixtures()
+
+        # Multiply fixtures for concurrency simulation
+        tasks = fixtures * (concurrency // len(fixtures) + 1)
+        tasks = tasks[:concurrency]
+
+        start_time = time.time()
+
+        results = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, min(32, concurrency))) as executor:
+            future_to_task = {executor.submit(calc.calculate, t.get("base_salary"), t.get("target_gross_profit")): t for t in tasks}
+            for future in concurrent.futures.as_completed(future_to_task):
+                try:
+                    res = future.result()
+                    results.append(res)
+                except Exception as e:
+                    logger.error(f"Crash during benchmark: {e}")
+                    raise e
+
+        end_time = time.time()
+        elapsed_ms = (end_time - start_time) * 1000.0
+        avg_ms = elapsed_ms / concurrency if concurrency > 0 else 0
+
+        return {
+            "total_tasks": concurrency,
+            "success_tasks": len(results),
+            "elapsed_ms": elapsed_ms,
+            "avg_ms_per_task": avg_ms,
+            "zero_crashes": len(results) == concurrency
+        }
