@@ -57,6 +57,13 @@ RULE_NAMES = (
     "date_consistency",        # 日期一致性（结束早于开始等）
     "required_keywords",       # 资格关键词缺失
     "required_sections",       # 章节缺失
+
+    "project_name_consistency",
+    "project_number_consistency",
+    "amount_uppercase_consistency",
+    "sub_amount_consistency",
+    "period_consistency",
+    "manager_consistency",
 )
 
 DEFAULT_RULES: dict[str, bool] = {name: True for name in RULE_NAMES}
@@ -72,6 +79,16 @@ _DATE = re.compile(r"(\d{4})[-/年](\d{1,2})[-/月](\d{1,2})日?")
 
 _HEADCOUNT_MIN, _HEADCOUNT_MAX = 1, 100000
 _AMOUNT_MIN = 100.0  # 低于此值视为非金额数字（如页码、编号），不参与比较
+
+_PROJECT_NAME = re.compile(r"项目名称[：:]\s*([^\n，。；]+)")
+_PROJECT_NUMBER = re.compile(r"项目编号[：:]\s*([a-zA-Z0-9\-]+)")
+_AMOUNT_UPPERCASE = re.compile(r"(?:人民币)?大写[：:]?\s*([零壹贰叁肆伍陆柒捌玖拾佰仟万亿元角分整正]+)")
+_SUB_AMOUNT_TOTAL = re.compile(r"分项报价.*?合计[：:]\s*([0-9][0-9,]*(?:\.[0-9]+)?)", flags=re.DOTALL)
+_PERIOD = re.compile(r"(?:工期|服务期限?|交货期)[：:]\s*([^\n，。；]+)")
+_MANAGER_NAME = re.compile(r"(?:项目经理|项目负责人)[：:]\s*([^\n，。；\s]+)")
+_MANAGER_ID = re.compile(r"(?:身份证号?码?)[：:]\s*([0-9Xx]{18})")
+
+
 
 #: 「总数」语境标记。规则只能靠字面判断一个数字是不是**总人数**：
 #:   「项目人员共计 180 人」→ 总数，不一致就是 error；
@@ -91,6 +108,57 @@ _TOTAL_MARKERS = (
 )
 #: 数字前多少个字符内出现标记即视为总数语境。
 _TOTAL_WINDOW = 12
+
+
+
+def _num2cn(num: float | None) -> str:
+    if num is None:
+        return ""
+    num = round(float(num), 2)
+    if num == 0:
+        return "零元整"
+
+    digits = "零壹贰叁肆伍陆柒捌玖"
+    units = ["", "拾", "佰", "仟", "万", "拾", "佰", "仟", "亿", "拾", "佰", "仟"]
+
+    int_part = int(num)
+    dec_part = int(round((num - int_part) * 100))
+
+    res = ""
+    if int_part > 0:
+        int_str = str(int_part)
+        n = len(int_str)
+        zero_flag = False
+        for i in range(n):
+            d = int(int_str[i])
+            if d != 0:
+                if zero_flag:
+                    res += "零"
+                    zero_flag = False
+                res += digits[d] + units[n - i - 1]
+            else:
+                zero_flag = True
+                if n - i - 1 == 4:
+                    res += "万"
+                    zero_flag = False
+                elif n - i - 1 == 8:
+                    res += "亿"
+                    zero_flag = False
+        res += "元"
+
+    if dec_part == 0:
+        res += "整"
+    else:
+        jiao = dec_part // 10
+        fen = dec_part % 10
+        if jiao > 0:
+            res += digits[jiao] + "角"
+        elif int_part > 0 and fen > 0:
+            res += "零"
+        if fen > 0:
+            res += digits[fen] + "分"
+
+    return res.replace("亿万", "亿")
 
 
 def _to_number(raw: str) -> float | None:
@@ -175,6 +243,20 @@ class DocumentChecker:
             issues.extend(self._check_keywords(full_text))
         if self._rules["required_sections"]:
             issues.extend(self._check_sections(sections, full_text))
+
+        if self._rules.get("project_name_consistency", False):
+            issues.extend(self._check_project_name(sections, meta))
+        if self._rules.get("project_number_consistency", False):
+            issues.extend(self._check_project_number(sections, meta))
+        if self._rules.get("amount_uppercase_consistency", False):
+            issues.extend(self._check_amount_uppercase(sections, meta))
+        if self._rules.get("sub_amount_consistency", False):
+            issues.extend(self._check_sub_amounts(sections, meta))
+        if self._rules.get("period_consistency", False):
+            issues.extend(self._check_period(sections, meta))
+        if self._rules.get("manager_consistency", False):
+            issues.extend(self._check_manager(sections, meta))
+
         return issues
 
     # -- 规则 1：人数一致性 --------------------------------------------------
@@ -281,7 +363,7 @@ class DocumentChecker:
                 }
             )
             return issues
-        tolerance = expected * self._amount_tolerance
+        tolerance = expected * getattr(self, "_amount_tolerance", 0.01)
 
         for section in sections:
             content = section["content"]
@@ -399,6 +481,152 @@ class DocumentChecker:
                         "location": "全文",
                     }
                 )
+        return issues
+
+
+    # -- 新增规则 -----------------------------------------------------------
+
+    def _check_project_name(self, sections: list[dict[str, str]], meta: dict[str, Any]) -> list[dict[str, str]]:
+        issues: list[dict[str, str]] = []
+        expected = meta.get("project_name")
+        if not expected:
+            return issues
+
+        for section in sections:
+            content = section["content"]
+            for m in _PROJECT_NAME.finditer(content):
+                found = m.group(1).strip()
+                if found != expected:
+                    issues.append({
+                        "severity": "error",
+                        "rule": "project_name_consistency",
+                        "message": f"文中出现项目名称「{found}」，与 meta.project_name（{expected}）不一致。",
+                        "location": f"章节「{section['title']}」",
+                    })
+        return issues
+
+    def _check_project_number(self, sections: list[dict[str, str]], meta: dict[str, Any]) -> list[dict[str, str]]:
+        issues: list[dict[str, str]] = []
+        expected = meta.get("project_number")
+        if not expected:
+            return issues
+
+        for section in sections:
+            content = section["content"]
+            for m in _PROJECT_NUMBER.finditer(content):
+                found = m.group(1).strip()
+                if found != expected:
+                    issues.append({
+                        "severity": "error",
+                        "rule": "project_number_consistency",
+                        "message": f"文中出现项目编号「{found}」，与 meta.project_number（{expected}）不一致。",
+                        "location": f"章节「{section['title']}」",
+                    })
+        return issues
+
+    def _check_amount_uppercase(self, sections: list[dict[str, str]], meta: dict[str, Any]) -> list[dict[str, str]]:
+        issues: list[dict[str, str]] = []
+        amount = meta.get("amount")
+        if amount is None:
+            return issues
+
+        expected_cn = _num2cn(amount)
+        if not expected_cn:
+            return issues
+
+        # Remove suffix for robust comparison
+        expected_cn_core = expected_cn.rstrip('整正')
+
+        for section in sections:
+            content = section["content"]
+            for m in _AMOUNT_UPPERCASE.finditer(content):
+                found = m.group(1).strip()
+                found_core = found.rstrip('整正')
+                if found_core != expected_cn_core:
+                    issues.append({
+                        "severity": "error",
+                        "rule": "amount_uppercase_consistency",
+                        "message": f"文中出现大写金额「{found}」，与总价大写（{expected_cn}）不一致。",
+                        "location": f"章节「{section['title']}」",
+                    })
+        return issues
+
+    def _check_sub_amounts(self, sections: list[dict[str, str]], meta: dict[str, Any]) -> list[dict[str, str]]:
+        issues: list[dict[str, str]] = []
+        amount = meta.get("amount")
+        if amount is None:
+            return issues
+
+        try:
+            expected = float(amount)
+        except (TypeError, ValueError):
+            return issues
+
+        tolerance = expected * getattr(self, "_amount_tolerance", 0.01)
+
+        for section in sections:
+            content = section["content"]
+            for m in _SUB_AMOUNT_TOTAL.finditer(content):
+                value = _to_number(m.group(1))
+                if value is None:
+                    continue
+                if abs(value - expected) > tolerance:
+                    issues.append({
+                        "severity": "error",
+                        "rule": "sub_amount_consistency",
+                        "message": f"分项报价合计「{value}」，与总价（{expected}）不一致。",
+                        "location": f"章节「{section['title']}」",
+                    })
+        return issues
+
+    def _check_period(self, sections: list[dict[str, str]], meta: dict[str, Any]) -> list[dict[str, str]]:
+        issues: list[dict[str, str]] = []
+        expected = meta.get("period")
+        if not expected:
+            return issues
+
+        for section in sections:
+            content = section["content"]
+            for m in _PERIOD.finditer(content):
+                found = m.group(1).strip()
+                if found != expected:
+                    issues.append({
+                        "severity": "error",
+                        "rule": "period_consistency",
+                        "message": f"文中出现工期/服务期限「{found}」，与 meta.period（{expected}）不一致。",
+                        "location": f"章节「{section['title']}」",
+                    })
+        return issues
+
+    def _check_manager(self, sections: list[dict[str, str]], meta: dict[str, Any]) -> list[dict[str, str]]:
+        issues: list[dict[str, str]] = []
+        expected_name = meta.get("manager_name")
+        expected_id = meta.get("manager_id")
+
+        for section in sections:
+            content = section["content"]
+
+            if expected_name:
+                for m in _MANAGER_NAME.finditer(content):
+                    found = m.group(1).strip()
+                    if found != expected_name:
+                        issues.append({
+                            "severity": "error",
+                            "rule": "manager_consistency",
+                            "message": f"文中出现项目经理「{found}」，与 meta.manager_name（{expected_name}）不一致。",
+                            "location": f"章节「{section['title']}」",
+                        })
+
+            if expected_id:
+                for m in _MANAGER_ID.finditer(content):
+                    found = m.group(1).strip()
+                    if found != expected_id:
+                        issues.append({
+                            "severity": "error",
+                            "rule": "manager_consistency",
+                            "message": f"文中出现身份证号「{found}」，与 meta.manager_id（{expected_id}）不一致。",
+                            "location": f"章节「{section['title']}」",
+                        })
         return issues
 
     # -- 规则 5：章节缺失 ----------------------------------------------------
