@@ -842,8 +842,23 @@ def generate_registration_package(payload: dict[str, Any]):
     )
 
 
+
+@app.post("/api/commercial/check-materials")
+def check_commercial_materials(payload: dict[str, Any]):
+    """商务标证明材料完备性自动核对。
+
+    body: {"provided_materials": ["社保证明", "合同关键页", ...], "required_materials": ["社保证明", "合同关键页"]}
+    返回完备性核对结果。
+    """
+    from app.services.commercial_checker import CommercialMaterialChecker
+
+    checker = CommercialMaterialChecker(required_materials=payload.get("required_materials"))
+    return checker.check(provided_materials=payload.get("provided_materials", []))
+
+
 # ---------------------------------------------------------------------------
 # 提醒 / 持续事件
+
 #
 # 铁律（交接文档 §3.1 / §12.5）：已读 != 已解决。
 #   POST /api/alerts/{id}/handle  → 只标记"人看过"，事件仍在首页
