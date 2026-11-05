@@ -69,6 +69,10 @@ def generate_decision_card(tender_data: dict) -> dict:
     if decision == '可投' and not reasons:
         reasons.append('各项指标良好')
 
+    import math
+    if math.isnan(competitor_count):
+        competitor_count = 0.0
+
     return {
         'decision': decision,
         'reasons': reasons,
