@@ -4,12 +4,33 @@ import { fiscalYear } from '../services/portfolio'
 import type { SheetLocation, SourceDataRow } from '../services/portfolio'
 import { SourceLocation, SourceRows } from '../components/PortfolioUI'
 import { RelatedWorkHistory } from './WorkspaceUI'
+import { DialogSurface } from '../components/DialogSurface'
+import { useProjectDraft } from '../services/projectDraft'
 import './BlindBidPage.css'
 
 type Fields = Record<string, string>
 type Row = { id: string; name: string; client: string; agency: string; region: string; type: string; deadline: string; date?: string; year?: string; limit?: string; month: string; row: number | string; status: string; result: string; published: boolean; winner: string; amount: string; ownMark: string; ownMarkMissing: boolean; ledgerConflict: boolean; resultUrl: string; sync: string; syncErrors: string[]; fields: Fields; ledger: Fields; cellNotes?: Record<string, string>; sourceRows?: SourceDataRow[]; source?: SheetLocation; sources?: SheetLocation[]; sourceWarnings?: string[]; readOnlyFields?: string[] }
 type Candidate = { id: string; name: string; client: string; agency?: string; region: string; type?: string; amount?: string; budget: number | null; deadline: string; url: string; channel: string; publishedAt: string; datePrecision: string; expiresAt: string; keywords: string[]; fields?: Fields; highlights?: string[]; detailStatus?: string; detailMessage?: string }
 type Workspace = { snapshot?: {generatedAt:string; intervalMinutes:number}; records: Row[]; candidates: Candidate[]; automation: { status?: string; lastSync?: string; message?: string; workbook?: string; intervalSeconds?: number; resultMonitor?: { status?: string; finishedAt?: string; searched?: number; updated?: number; errors?: string[] }; collection?: { lastRun?: string; status?: string; catalogCount?: number; total?: number; usable?: number; failed?: number; newCount?: number; channels?: { name: string; status: string; message?: string }[] } }; rules: { resultIntervalMinutes: number } }
+// A save can finish after browser Back/Forward has replaced the page instance.
+// Deliver its successful snapshot to the page that is currently mounted.
+const blindUpdates = new Set<(updated: Workspace, message: string) => void>()
+let blindSaveSequence = 0
+let publishedBlindSave = 0
+const publishBlindSnapshot = (updated: Workspace, message: string) => blindUpdates.forEach(receive => receive(updated, message))
+const publishBlindUpdate = (updated: Workspace, message: string, sequence: number) => {
+  if (sequence < publishedBlindSave) {
+    // Save replies contain the whole workspace. A late reply can predate a
+    // newer successful write to another project, so read the current snapshot.
+    const observedSave = publishedBlindSave
+    void request<Workspace>('/blind/workspace?refresh=true').then(current => {
+      if (publishedBlindSave === observedSave) publishBlindSnapshot(current, message)
+    }).catch(() => {})
+    return
+  }
+  publishedBlindSave = sequence
+  publishBlindSnapshot(updated, message)
+}
 const STATUS = ['待评估', '未报名', '报名未参与', '报名参与']
 const TABS = ['新信息', '待评估', '报名参与', '报名未参与', '未报名', '台账']
 const CHANNEL: Record<string, string> = { sichuan_gov_procurement: '四川政府采购网', sc_public_resource_trading: '四川省公共资源交易网', chengdu_public_resource_trading: '成都公共资源交易网' }
@@ -204,21 +225,28 @@ export function BlindBidPage() {
   const [page, setPage] = useState(restoredView?.page || 1)
   const [selected, setSelected] = useState(restoredView?.selected || '')
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState('')
   const [showAutomation, setShowAutomation] = useState(false)
   const [showRegion, setShowRegion] = useState(false)
   const [sort, setSort] = useState<'desc' | 'asc'>(restoredView?.sort || 'desc')
   const previousFilters = useRef(JSON.stringify([tab, search, filters, sort]))
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState<Fields>({})
-  const [base, setBase] = useState<Fields>({})
-  const [draftOwnMark, setDraftOwnMark] = useState('')
-  const [baseOwnMark, setBaseOwnMark] = useState('')
-  const load = useCallback(async (force = false) => { setData(await request<Workspace>(`/blind/workspace${force ? '?refresh=true' : ''}`)); setError('') }, [])
   useEffect(() => {
-    load().catch(e => setError(e.message))
-    const timer = window.setInterval(() => load().catch(e => setError(e.message)), 30000)
+    const receive = (updated: Workspace, message: string) => { setData(updated); setError(''); setNotice(message) }
+    blindUpdates.add(receive)
+    return () => { blindUpdates.delete(receive) }
+  }, [])
+  const load = useCallback(async (force = false) => {
+    setLoading(true); setLoadError('')
+    try { setData(await request<Workspace>(`/blind/workspace${force ? '?refresh=true' : ''}`)) }
+    catch (e) { setLoadError(e instanceof Error ? e.message : '读取失败'); throw e }
+    finally { setLoading(false) }
+  }, [])
+  useEffect(() => {
+    load().catch(() => {})
+    const timer = window.setInterval(() => load().catch(() => {}), 30000)
     const selectedParam = new URLSearchParams(window.location.search).get('select')
     if (selectedParam) setSelected(selectedParam)
     return () => window.clearInterval(timer)
@@ -247,30 +275,8 @@ export function BlindBidPage() {
   const rows = useMemo(() => allRows.filter(r => !year || r.year === year), [allRows, year])
   const years = [...new Set(allRows.map(r => r.year).filter((v): v is string => Boolean(v)))].sort().reverse()
   const candidates = (data?.candidates || []).filter(x => new Date(x.expiresAt).getTime() > Date.now())
-  const detailGroups = useMemo(() => {
-    const withSource = (records: Row[]) => {
-      const mapped = BLIND_DETAIL_GROUPS.map(section => ({ ...section, fields: section.fields.filter(group => {
-        if (section.title === '跟进记录') return records.some(record => group.keys.some(key => [record.fields, ...(record.sourceRows || []).map(row => row.fields)].some(fields => key in fields)))
-        return records.some(record => group.keys.some(key => [record.fields, ...(record.sourceRows || []).map(row => row.fields)].some(fields =>
-          key === '打印费（元）' ? isMoneyAmount(fields[key]) : displayValue(fields[key]) !== '/')) || ('fallback' in group && displayValue(record[group.fallback]) !== '/'))
-      }) })).filter(section => section.fields.length)
-      const extraKeys = Array.from(new Set(records.flatMap(record => [record.fields, ...(record.sourceRows || []).map(row => row.fields)].flatMap(fields => Object.entries(fields)
-        .filter(([key, value]) => !BLIND_OTHER_FIELD_EXCLUSIONS.has(key) && !/^BidOS/i.test(key) && !/网址|链接/.test(key) && displayValue(value) !== '/')
-        .map(([key]) => key))))).sort((a, b) => a.localeCompare(b, 'zh-CN'))
-      const extras = extraKeys.length ? [{ title: '其他原表字段', fields: extraKeys.map(key => ({ label: key, keys: [key] })) }] : []
-      return [...mapped, ...extras]
-    }
-    return { records: withSource(data?.records || []), candidates: withSource((data?.candidates || []).map(candidateRow)) }
-  }, [data?.records, data?.candidates])
   const selectedCandidate = candidates.find(x => x.id === selected)
   const selectedRow = allRows.find(r => r.id === selected) || (selectedCandidate ? candidateRow(selectedCandidate) : undefined)
-  const selectedDiscount = selectedRow ? discountRate(selectedRow.fields, selectedRow.limit || '', selectedRow.amount || '') : ''
-  const discountKeys = selectedRow ? ['折扣率', '报价折扣率'].filter(key => key in selectedRow.fields) : []
-  const discountFields = selectedRow ? { ...selectedRow.fields } : {}
-  if (selectedDiscount) {
-    if (discountKeys.length) discountKeys.forEach(key => { discountFields[key] = selectedDiscount })
-    else discountFields['折扣率'] = selectedDiscount
-  }
   const hasResultColumn = !['待评估', '未报名'].includes(tab)
   const counts = Object.fromEntries(TABS.map(t => [t, t === '台账' ? rows.length : t === '新信息' ? candidates.length : rows.filter(r => r.status === t).length]))
   const options = (key: 'region' | 'type') => Array.from(new Set(rows.map(r => r[key]))).filter(Boolean).sort()
@@ -295,8 +301,6 @@ export function BlindBidPage() {
   const pageRows = filtered.slice((Math.min(page, pageCount) - 1) * 30, Math.min(page, pageCount) * 30)
   const activeFilters = Boolean(search || (tab !== '新信息' && Object.values(filters).some(Boolean)))
   function setFilter(key: keyof typeof filters, value: string) { setFilters(prev => ({ ...prev, [key]: value })) }
-  function updateDraft(keys: string[], value: string) { setDraft(prev => ({ ...prev, ...Object.fromEntries(keys.map(k => [k, value])) })) }
-  function closeDrawer() { setSelected(''); setEditing(false); setError('') }
   function rememberView() {
     try { window.sessionStorage.setItem(VIEW_KEY, JSON.stringify({ tab, search, filters, page, selected, sort })) } catch { /* 返回时仍可读取台账。 */ }
   }
@@ -314,46 +318,12 @@ export function BlindBidPage() {
       else setNotice(row?.sync === '已同步' ? '已进入待评估，并写入收集月份的 Excel' : '已进入待评估，等待 Excel 可写后同步')
     } catch (e) { setError((e as Error).message); await load() } finally { setBusy('') }
   }
-  function openRow(r: Row) { setSelected(r.id); setEditing(false); setError('') }
-  function startEditing(r: Row) { setDraft({ ...r.fields }); setBase({ ...r.fields }); setDraftOwnMark(r.ownMark); setBaseOwnMark(r.ownMark); setEditing(true) }
-  async function save() {
-    if (!selectedRow) return
-    const edits = Object.entries(draft).filter(([key, value]) => value !== base[key]).map(([field, value]) => ({ field, value, baseValue: base[field] || '' }))
-    const ownMark = draftOwnMark !== baseOwnMark ? { value: draftOwnMark, baseValue: baseOwnMark } : undefined
-    if (!edits.length && !ownMark) { setEditing(false); return }
-    setBusy(selectedRow.id); setError(''); setNotice('')
-    try {
-      const updated = await request<Workspace>(`/portfolio/blind/${selectedRow.id}/save`, { edits, ownMark })
-      setData(updated)
-      const row = updated.records.find(r => r.id === selectedRow.id)
-      if (row?.sync === '需处理') { setError(row.syncErrors.join('；')); return }
-      setEditing(false); setNotice(row?.sync === '已同步' ? '已保存到桌面 Excel' : '已保存，等待 Excel 可写后同步')
-    } catch (e) { setError((e as Error).message) } finally { setBusy('') }
-  }
+  function openRow(r: Row) { setSelected(r.id); setError('') }
   const automation = data?.automation
-  const participationKeys = selectedRow ? ['报名参与情况', '报名参与情况统计'].filter(k => k in selectedRow.fields) : []
-  const rawDraftStatus = draft[participationKeys[0]] || draft[participationKeys[1]]
-  const selectedStatus = selectedRow ? editing && STATUS.includes(rawDraftStatus) ? rawDraftStatus : selectedRow.status : ''
-  const detailFields = selectedRow ? { ...selectedRow.fields } : {}
-  if (!editing && selectedRow) {
-    const legacyFeeText = detailFields['打印费（元）']
-    if (displayValue(legacyFeeText) !== '/' && !isMoneyAmount(legacyFeeText)) {
-      delete detailFields['打印费（元）']
-      const reason = detailFields['未参与原因'] || ''
-      const remark = detailFields['备注'] || ''
-      if (displayValue(reason) === '/' && selectedStatus === '报名未参与') detailFields['未参与原因'] = legacyFeeText
-      else if (displayValue(remark) === '/' && legacyFeeText !== reason) detailFields['备注'] = legacyFeeText
-    }
-    if (selectedStatus === '报名未参与' && detailFields['备注'] && detailFields['备注'] === detailFields['未参与原因']) delete detailFields['备注']
-  }
-  const sourceKeys = selectedRow ? Object.keys(selectedRow.fields).filter(k => /网址|链接/.test(k) && !/结果/.test(k)) : []
-  const sourceLinks = selectedRow ? sourceKeys.filter((k, i) => noticeUrl(selectedRow.fields[k]) && sourceKeys.findIndex(key => noticeUrl(selectedRow.fields[key]) === noticeUrl(selectedRow.fields[k])) === i) : []
-  const drawerErrors = Array.from(new Set([error, ...(selectedRow?.syncErrors || [])].filter(Boolean)))
-  const hasResult = selectedRow && ['报名参与', '报名未参与'].includes(selectedStatus)
   return <section className="page blind-workbench">
     <div className="blind-heading">
-      <div><h1>盲投信息</h1><div className="blind-automation"><span className={`blind-dot ${automation?.status === 'ok' ? 'ok' : ''}`} /><span>{automation?.status === 'ok' ? `数据快照 · ${timeText(data?.snapshot?.generatedAt || automation.lastSync)}` : automation?.message || '正在读取数据快照'}</span><button onClick={() => setShowAutomation(!showAutomation)} aria-expanded={showAutomation}>自动化详情 {showAutomation ? '▴' : '▾'}</button></div></div>
-      <button className="btn ghost" onClick={sync} disabled={Boolean(busy)}>{busy === 'sync' ? '同步中…' : '刷新并同步'}</button>
+      <div><h1>盲投信息</h1><div className="blind-automation"><span className={`blind-dot ${automation?.status === 'ok' ? 'ok' : ''}`} /><span>{automation?.status === 'ok' ? `数据快照 · ${timeText(data?.snapshot?.generatedAt || automation.lastSync)}` : automation?.message || (loading ? '正在读取数据快照' : loadError ? '数据快照读取失败' : '已读取数据快照')}</span><button onClick={() => setShowAutomation(!showAutomation)} aria-expanded={showAutomation}>自动化详情 {showAutomation ? '▴' : '▾'}</button></div></div>
+      <button className="btn ghost" onClick={sync} disabled={Boolean(busy) || !data}>{busy === 'sync' ? '同步中…' : '刷新并同步'}</button>
     </div>
     {showAutomation && <div className="blind-auto-detail">
       <div><strong>新信息</strong><p>收集近24小时的公告，经既有关键词与反向规则筛选。同一项目去重；首次收集24小时内未进入待评估自动清理。</p></div>
@@ -361,21 +331,22 @@ export function BlindBidPage() {
       <div><strong>双向同步</strong><p>桌面 Excel 为工作正本。每分钟读取表格变更；系统保存后立即尝试回写，Excel正在编辑时等待下一轮。冲突提示人工核对。</p></div>
       {automation?.collection && <div className="blind-channel-status"><strong>渠道采集{automation.collection.catalogCount ? ` · 目录 ${automation.collection.catalogCount} 个渠道` : ''}</strong><p>每天16:30收集 · 最近运行 {timeText(automation.collection.lastRun)} · {automation.collection.status} · 本轮新增 {automation.collection.newCount || 0}{automation.collection.total !== undefined ? ` · 已读取 ${automation.collection.usable || 0} / ${automation.collection.total} 个采集入口` : ''}</p>{automation.collection.channels?.map((c, i) => <p key={i}>{c.name}：{c.status}{c.message ? ` · ${channelMessage(c.message)}` : ''}</p>)}</div>}
     </div>}
-    {error && !selectedRow && <div className="blind-message error" role="alert">{error}</div>}
+    {loadError && <div className="blind-message error" role="alert">读取失败：{loadError}{data && <span> · 当前显示旧快照 {timeText(data.snapshot?.generatedAt || data.automation.lastSync)}</span>} <button className="btn ghost" disabled={loading} onClick={() => void load(true).catch(() => {})}>{loading ? '重新读取中…' : '重新读取'}</button> <a href="/ops" onClick={rememberView}>数据与自动化 ↗</a></div>}
+    {error && !selectedRow && <div className="blind-message error" role="alert">{error} <a href="/ops" onClick={rememberView}>查看数据与自动化 ↗</a></div>}
     {notice && <div className="blind-toast" role="status">{notice}</div>}
-    <div className="blind-tabs" role="tablist" aria-label="盲投参与状态">{TABS.map(t => <button role="tab" aria-selected={tab === t} className={tab === t ? 'active' : ''} key={t} onClick={() => { setTab(t); setShowRegion(false); if (['待评估', '未报名'].includes(t)) setFilter('result', '') }}>{t === '台账' ? '全部' : t}<b>{counts[t]}</b></button>)}</div>
+    <div className="blind-tabs" role="tablist" aria-label="盲投参与状态">{TABS.map(t => <button role="tab" aria-selected={tab === t} className={tab === t ? 'active' : ''} key={t} onClick={() => { setTab(t); setShowRegion(false); if (['待评估', '未报名'].includes(t)) setFilter('result', '') }}>{t === '台账' ? '全部' : t}{data && <b>{counts[t]}</b>}</button>)}</div>
     <div className="blind-toolbar">
       <input className="blind-search" aria-label="全字段搜索" placeholder="搜索项目、甲方、代理、中标单位或备注…" value={search} onChange={e => setSearch(e.target.value)} />
       {tab !== '新信息' && <><select aria-label="盲投财年" value={year} onChange={e => { setYear(e.target.value); setPage(1) }}><option value="">全部财年</option>{years.map(y => <option key={y} value={y}>{y}财年</option>)}</select><div className="blind-date-range"><span>截止 / 开标</span><input type="date" aria-label="起始日期" value={filters.from} onChange={e => setFilter('from', e.target.value)} /><span>至</span><input type="date" aria-label="结束日期" min={filters.from || undefined} value={filters.to} onChange={e => setFilter('to', e.target.value)} /></div></>}
       {activeFilters && <button className="blind-clear" onClick={() => { setSearch(''); setFilters(EMPTY_FILTERS) }}>清空</button>}
     </div>
-    {data === null ? <div className="blind-empty">正在读取工作台…</div> : tab === '新信息' ? <>
+    {data === null ? <div className="blind-empty" role="status">{loading ? '正在读取工作台…' : '工作台未能读取，请重新读取。'}</div> : tab === '新信息' ? <>
       <div className="blind-queue-note">24小时内进入待评估，才写入收集月份的 Excel；未选信息自动清理。</div>
       {fresh.length === 0 && <div className="blind-empty">暂无符合条件的新信息</div>}
       {fresh.length > 0 && <div className="blind-table-wrap"><table className="blind-table blind-new-table"><thead><tr>
         <th>项目名称</th><th>甲方 / 代理</th><th>区域 / 类型</th><th>报名截止</th><th>招标金额 / 限价</th><th>操作</th>
       </tr></thead>{fresh.map(x => <tbody key={x.id} className="blind-new-project">
-        <tr><td><button className="blind-project" title={x.name} onClick={() => { setSelected(x.id); setEditing(false); setError('') }}>{x.name}</button><small>{CHANNEL[x.channel] || x.channel}<br />{dateText(x.publishedAt)} 发布</small></td>
+        <tr><td><button className="blind-project" title={x.name} onClick={() => { setSelected(x.id); setError('') }}>{x.name}</button><small>{CHANNEL[x.channel] || x.channel}<br />{dateText(x.publishedAt)} 发布</small></td>
           <td><div className="blind-cell-client" title={x.client}>{displayValue(x.client)}</div>{x.agency && <small>代理：{x.agency}</small>}</td>
           <td>{displayValue(x.region)}<small>{displayValue(x.type)}</small></td>
           <td>{displayValue(dateText(x.fields?.['报名截止时间'] || x.deadline))}{(x.fields?.['报名截止时间'] || x.deadline).match(/[T\s](\d{2}:\d{2})/)?.[1] && <small>{(x.fields?.['报名截止时间'] || x.deadline).match(/[T\s](\d{2}:\d{2})/)?.[1]}</small>}</td>
@@ -409,15 +380,105 @@ export function BlindBidPage() {
       </tr>)}</tbody></table>{filtered.length === 0 && <div className="blind-empty">没有符合筛选条件的项目</div>}</div>
       <div className="blind-pagination"><span>共 {filtered.length} 条 · 每页30条</span><button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>上一页</button><span>{Math.min(page, pageCount)} / {pageCount}</span><button disabled={page >= pageCount} onClick={() => setPage(p => p + 1)}>下一页</button></div>
     </>}
-    {selectedRow && <div className="blind-drawer-backdrop" onClick={closeDrawer}><aside className="blind-drawer" aria-label="项目详情" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+    {selectedRow && <BlindDrawer key={selectedRow.id} selectedRow={selectedRow} selectedCandidate={selectedCandidate} data={data!} externalBusy={busy} error={error} rememberView={rememberView} promote={promote} onClose={() => { setSelected(''); setError('') }} onSaved={publishBlindUpdate} />}
+  </section>
+}
+
+
+function BlindDrawer({ selectedRow, selectedCandidate, data, externalBusy, error, rememberView, promote, onClose, onSaved }: {
+  selectedRow: Row; selectedCandidate?: Candidate; data: Workspace; externalBusy: string; error: string;
+  rememberView: () => void; promote: (candidate: Candidate) => Promise<void>; onClose: () => void;
+  onSaved: (updated: Workspace, message: string, sequence: number) => void;
+}) {
+  const fromRow = (row = selectedRow) => ({ draft: { ...row.fields }, base: { ...row.fields }, draftOwnMark: row.ownMark, baseOwnMark: row.ownMark, editing: false, dirty: false })
+  const state = useProjectDraft(`${selectedRow.id}:blind-editor`, fromRow())
+  const { draft, base, draftOwnMark, baseOwnMark, editing, dirty: hasDraft } = state.value
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const busy = saving ? selectedRow.id : externalBusy
+  useEffect(() => { if (!hasDraft) state.reset(fromRow()) }, [])
+  useEffect(() => { if (!editing && !hasDraft) state.reset(fromRow()) }, [selectedRow.fields, selectedRow.ownMark, editing, hasDraft, state.reset])
+  const setDraft = (change: (previous: Fields) => Fields) => state.update(previous => {
+    const next = change(previous.draft)
+    return { ...previous, draft: next, dirty: true }
+  })
+  const setDraftOwnMark = (value: string) => state.update({ draftOwnMark: value, dirty: true })
+  function updateDraft(keys: string[], value: string) { setDraft(previous => ({ ...previous, ...Object.fromEntries(keys.map(key => [key, value])) })) }
+  function startEditing(row: Row) { state.reset({ ...fromRow(row), editing: true }); setSaveError('') }
+  function discardEditing() { if (hasDraft && !window.confirm('有未保存修改。放弃草稿并继续？')) return false; state.reset(fromRow()); return true }
+  function closeDrawer() { if (!busy && discardEditing()) onClose() }
+  async function save() {
+    const edits = Object.entries(draft).filter(([key, value]) => value !== base[key]).map(([field, value]) => ({ field, value, baseValue: base[field] || '' }))
+    const ownMark = draftOwnMark !== baseOwnMark ? { value: draftOwnMark, baseValue: baseOwnMark } : undefined
+    if (!edits.length && !ownMark) { state.reset(fromRow()); return }
+    const revision = state.getRevision()
+    const saveSequence = ++blindSaveSequence
+    setSaving(true); setSaveError('')
+    try {
+      const updated = await request<Workspace>(`/portfolio/blind/${selectedRow.id}/save`, { edits, ownMark })
+      const row = updated.records.find(record => record.id === selectedRow.id)
+      onSaved(updated, row?.sync === '需处理' ? '' : row?.sync === '已同步' ? '已保存到桌面 Excel' : '已保存，等待 Excel 可写后同步', saveSequence)
+      if (row?.sync === '需处理') { setSaveError(row.syncErrors.join('；')); return }
+      if (row && !state.reset(fromRow(row), revision)) state.update(previous => {
+        if (JSON.stringify(previous.base) !== JSON.stringify(base) || previous.baseOwnMark !== baseOwnMark) return previous
+        if (!previous.dirty) return { ...fromRow(row), editing: previous.editing }
+        const fields = { ...row.fields, ...Object.fromEntries(Object.entries(previous.draft).filter(([key, value]) => value !== draft[key])) }
+        const mark = previous.draftOwnMark === draftOwnMark ? row.ownMark : previous.draftOwnMark
+        return { ...previous, draft: fields, base: { ...row.fields }, draftOwnMark: mark, baseOwnMark: row.ownMark, dirty: JSON.stringify(fields) !== JSON.stringify(row.fields) || mark !== row.ownMark }
+      })
+    } catch (e) { setSaveError((e as Error).message) } finally { setSaving(false) }
+  }
+  const detailGroups = useMemo(() => {
+    const withSource = (records: Row[]) => {
+      const mapped = BLIND_DETAIL_GROUPS.map(section => ({ ...section, fields: section.fields.filter(group => {
+        if (section.title === '跟进记录') return records.some(record => group.keys.some(key => [record.fields, ...(record.sourceRows || []).map(row => row.fields)].some(fields => key in fields)))
+        return records.some(record => group.keys.some(key => [record.fields, ...(record.sourceRows || []).map(row => row.fields)].some(fields =>
+          key === '打印费（元）' ? isMoneyAmount(fields[key]) : displayValue(fields[key]) !== '/')) || ('fallback' in group && displayValue(record[group.fallback]) !== '/'))
+      }) })).filter(section => section.fields.length)
+      const extraKeys = Array.from(new Set(records.flatMap(record => [record.fields, ...(record.sourceRows || []).map(row => row.fields)].flatMap(fields => Object.entries(fields)
+        .filter(([key, value]) => !BLIND_OTHER_FIELD_EXCLUSIONS.has(key) && !/^BidOS/i.test(key) && !/网址|链接/.test(key) && displayValue(value) !== '/')
+        .map(([key]) => key))))).sort((a, b) => a.localeCompare(b, 'zh-CN'))
+      const extras = extraKeys.length ? [{ title: '其他原表字段', fields: extraKeys.map(key => ({ label: key, keys: [key] })) }] : []
+      return [...mapped, ...extras]
+    }
+    return { records: withSource(data?.records || []), candidates: withSource((data?.candidates || []).map(candidateRow)) }
+  }, [data?.records, data?.candidates])
+  const selectedDiscount = selectedRow ? discountRate(selectedRow.fields, selectedRow.limit || '', selectedRow.amount || '') : ''
+  const discountKeys = selectedRow ? ['折扣率', '报价折扣率'].filter(key => key in selectedRow.fields) : []
+  const discountFields = selectedRow ? { ...selectedRow.fields } : {}
+  if (selectedDiscount) {
+    if (discountKeys.length) discountKeys.forEach(key => { discountFields[key] = selectedDiscount })
+    else discountFields['折扣率'] = selectedDiscount
+  }
+  const participationKeys = selectedRow ? ['报名参与情况', '报名参与情况统计'].filter(k => k in selectedRow.fields) : []
+  const rawDraftStatus = draft[participationKeys[0]] || draft[participationKeys[1]]
+  const selectedStatus = selectedRow ? editing && STATUS.includes(rawDraftStatus) ? rawDraftStatus : selectedRow.status : ''
+  const detailFields = selectedRow ? { ...selectedRow.fields } : {}
+  if (!editing && selectedRow) {
+    const legacyFeeText = detailFields['打印费（元）']
+    if (displayValue(legacyFeeText) !== '/' && !isMoneyAmount(legacyFeeText)) {
+      delete detailFields['打印费（元）']
+      const reason = detailFields['未参与原因'] || ''
+      const remark = detailFields['备注'] || ''
+      if (displayValue(reason) === '/' && selectedStatus === '报名未参与') detailFields['未参与原因'] = legacyFeeText
+      else if (displayValue(remark) === '/' && legacyFeeText !== reason) detailFields['备注'] = legacyFeeText
+    }
+    if (selectedStatus === '报名未参与' && detailFields['备注'] && detailFields['备注'] === detailFields['未参与原因']) delete detailFields['备注']
+  }
+  const sourceKeys = selectedRow ? Object.keys(selectedRow.fields).filter(k => /网址|链接/.test(k) && !/结果/.test(k)) : []
+  const sourceLinks = selectedRow ? sourceKeys.filter((k, i) => noticeUrl(selectedRow.fields[k]) && sourceKeys.findIndex(key => noticeUrl(selectedRow.fields[key]) === noticeUrl(selectedRow.fields[k])) === i) : []
+  const drawerErrors = Array.from(new Set([error, saveError, ...(selectedRow?.syncErrors || [])].filter(Boolean)))
+  const hasResult = selectedRow && ['报名参与', '报名未参与'].includes(selectedStatus)
+  return <DialogSurface label="项目详情" className="blind-drawer" backdropClassName="blind-drawer-backdrop" onClose={closeDrawer}>
       <div className="blind-drawer-head"><div>{editing ? <textarea className="blind-title-editor" aria-label="项目名称" value={draft['项目名称'] || ''} onChange={e => updateDraft(['项目名称'], e.target.value)} rows={2} /> : <h2>{selectedRow.name}</h2>}<p>{selectedCandidate ? `${selectedCandidate.channel} · 发布于 ${dateText(selectedCandidate.publishedAt)}` : `${selectedRow.month} · 原表第${selectedRow.row}行`}</p></div><button aria-label="关闭项目详情" onClick={closeDrawer}>×</button></div>
       <div className="blind-drawer-actions">
         {editing && participationKeys.length ? <select aria-label="参与状态" value={STATUS.includes(selectedStatus) ? selectedStatus : selectedRow.status} onChange={e => updateDraft(participationKeys, e.target.value)}>{STATUS.map(v => <option key={v}>{v}</option>)}</select> : <Badge value={selectedRow.status} />}
         <Badge value={selectedRow.sync} />
-        {selectedCandidate ? <button className="btn" disabled={Boolean(busy)} onClick={() => promote(selectedCandidate)}>{busy === selectedCandidate.id ? '写入中…' : '进入待评估'}</button> : editing ? <><button className="btn" disabled={Boolean(busy)} onClick={save}>{busy ? '保存中…' : '保存到 Excel'}</button><button className="btn ghost" disabled={Boolean(busy)} onClick={() => setEditing(false)}>取消</button></> : <button className="btn" onClick={() => startEditing(selectedRow)}>编辑项目</button>}
+        {selectedCandidate ? <button className="btn" disabled={Boolean(busy)} onClick={() => promote(selectedCandidate)}>{busy === selectedCandidate.id ? '写入中…' : '进入待评估'}</button> : editing ? <><button className="btn" disabled={Boolean(busy)} onClick={save}>{busy ? '保存中…' : '保存到 Excel'}</button><button className="btn ghost" disabled={Boolean(busy)} onClick={discardEditing}>取消</button></> : <button className="btn" onClick={() => startEditing(selectedRow)}>编辑项目</button>}
         {!editing && sourceLinks.map((k, i) => <a key={k} href={noticeUrl(selectedRow.fields[k])} target="_blank" onClick={rememberView} rel="noopener noreferrer" title="在新标签页打开原公告，本页保持当前项目">{sourceLinks.length === 1 || i === 0 ? '招标原文' : FIELD_LABELS[k] || k} ↗</a>)}
       </div>
-      {drawerErrors.map(v => <div className="blind-message error" role="alert" key={v}>{v}</div>)}
+      {hasDraft && <p className="blind-message" role="status">有未保存修改 · 草稿按项目保留在当前浏览器会话，返回项目后可继续编辑。</p>}
+      {drawerErrors.map(v => <div className="blind-message error" role="alert" key={v}>{v} <a href="/ops" onClick={rememberView}>查看数据与自动化 ↗</a></div>)}
       {selectedCandidate?.detailMessage && <div className="blind-message blind-attention">{selectedCandidate.detailMessage}</div>}
       {hasResult && <section className="blind-result">
         <div className="blind-result-heading"><h3>中标结果</h3>{!editing && <Badge value={selectedRow.ownMarkMissing ? '待补标注' : selectedRow.result || (selectedRow.published ? '已公布' : '待公布')} />}{!editing && !selectedRow.published && <span>自动跟进中</span>}{editing && 'BidOS结果公布' in selectedRow.fields && <label>公布状态 <select aria-label="公布状态" value={draft['BidOS结果公布'] || ''} onChange={e => updateDraft(['BidOS结果公布'], e.target.value)}><option value=""></option><option>待公布</option><option>已公布</option></select></label>}{!editing && noticeUrl(selectedRow.resultUrl) && <a href={noticeUrl(selectedRow.resultUrl)} target="_blank" onClick={rememberView} rel="noopener noreferrer" title="在新标签页打开结果公告，本页保持当前项目">结果公告 ↗</a>}</div>
@@ -484,6 +545,5 @@ export function BlindBidPage() {
       {!editing && <RelatedWorkHistory projectId={selectedRow.id} sourceKeys={selectedRow.sources || (selectedRow.source ? [selectedRow.source] : [])} />}
       {!editing && <SourceRows rows={selectedRow.sourceRows} />}
       {!editing && selectedRow.sources?.map(source => <SourceLocation key={`${source.file}/${source.sheet}/${source.row}`} source={source} />)}
-    </aside></div>}
-  </section>
+    </DialogSurface>
 }

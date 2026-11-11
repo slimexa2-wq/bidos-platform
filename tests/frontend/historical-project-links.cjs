@@ -1,0 +1,43 @@
+// Historical deep links must never silently open a different project's editor.
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const assert = require('node:assert/strict');
+const URL = 'http://127.0.0.1:7521';
+let browser;
+(async () => {
+  const reset = await fetch('http://127.0.0.1:7522/__test__/control', { method: 'POST', body: JSON.stringify({ reset: true, mode: 'normal', delay: 0 }) });
+  assert.equal((await reset.json()).fixture, 'bidos-ux-synthetic');
+  browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true, args: ['--no-sandbox'], timeout: 120000 });
+  const page = await browser.newPage();
+  page.setDefaultTimeout(60000);
+  await page.route('**/api/workspace*', async route => {
+    const response = await route.fetch();
+    assert.equal(response.headers()['x-bidos-fixture'], 'ux-synthetic');
+    const workspace = await response.json();
+    const historicalName = '【演示】同甲方历史项目';
+    const source = workspace.projects[1];
+    workspace.projects.push({ ...source, id: 'historical-project', name: historicalName, isHistorical: true, fields: { ...source.fields, 项目名称: historicalName }, sourceRows: source.sourceRows.map(row => ({ ...row, fields: { ...row.fields, 项目名称: historicalName } })), work: { ...source.work, notes: 'historical saved note' } });
+    await route.fulfill({ response, json: workspace });
+  });
+  await page.goto(URL + '/evaluation?select=p1', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('link', { name: /【演示】同甲方历史项目/ }).click();
+  await page.locator('.ws-work h2').filter({ hasText: '【演示】同甲方历史项目' }).waitFor();
+  assert(await page.getByRole('checkbox', { name: '包含历史项目', exact: true }).isChecked());
+  assert.equal(await page.getByLabel('工作备注', { exact: true }).inputValue(), 'historical saved note');
+  await page.getByLabel('工作备注', { exact: true }).fill('historical unsaved draft');
+  await page.getByRole('checkbox', { name: '包含历史项目', exact: true }).uncheck();
+  assert.equal(await page.getByLabel('工作备注', { exact: true }).count(), 0);
+  await page.getByText('当前链接指向历史项目；勾选“包含历史项目”或选择其他项目后处理。', { exact: true }).waitFor();
+  await page.getByRole('checkbox', { name: '包含历史项目', exact: true }).check();
+  assert.equal(await page.getByLabel('工作备注', { exact: true }).inputValue(), 'historical unsaved draft');
+  await page.getByRole('searchbox', { name: '搜索工作项目' }).fill('文化中心');
+  await page.locator('.ws-work h2').filter({ hasText: '文化中心' }).waitFor();
+  await page.getByRole('searchbox', { name: '搜索工作项目' }).fill('no matching synthetic project');
+  assert.equal(await page.getByLabel('工作备注', { exact: true }).count(), 0);
+  await page.getByRole('searchbox', { name: '搜索工作项目' }).fill('');
+  assert.equal(await page.getByLabel('工作备注', { exact: true }).inputValue(), 'historical unsaved draft');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('.ws-work h2').filter({ hasText: '【演示】同甲方历史项目' }).waitFor();
+  assert.equal(await page.getByLabel('工作备注', { exact: true }).inputValue(), 'historical unsaved draft');
+  console.log('PASS historical links select their target, explain history expansion, honor manual filters and retain drafts');
+  await browser.close();
+})().catch(async error => { console.error(error); if (browser) await browser.close(); process.exitCode = 1; });

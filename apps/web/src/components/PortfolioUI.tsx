@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { StatusPill } from './StatusPill'
 import { openPortfolioSource } from '../services/portfolio'
 import type { SheetLocation, SourceDataRow } from '../services/portfolio'
 import type { DetailSection } from '../services/detailFields'
 import { displayValue, formatDiscountRate, sourceDate } from '../services/detailFields'
+import { DialogSurface } from './DialogSurface'
 import './PortfolioUI.css'
 
 export function Outcome({ value }: { value: string }) {
@@ -19,8 +20,7 @@ export function Metrics({ items }: { items: { label: string; value: ReactNode; n
   return <div className="portfolio-metrics">{items.map(x => <div key={x.label}><span>{x.label}</span><b style={{ color: x.color }}>{x.value}</b>{x.note && <small>{x.note}</small>}</div>)}</div>
 }
 export function Drawer({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
-  useEffect(() => { const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }; const prior = document.body.style.overflow; document.body.style.overflow = 'hidden'; document.addEventListener('keydown', key); return () => { document.body.style.overflow = prior; document.removeEventListener('keydown', key) } }, [onClose])
-  return <div className="portfolio-backdrop" onClick={onClose}><aside className="portfolio-drawer" role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}><header><h2>{title}</h2><button className="icon-btn" aria-label="关闭详情" onClick={onClose}>×</button></header>{children}</aside></div>
+  return <DialogSurface label={title} className="portfolio-drawer" backdropClassName="portfolio-backdrop" onClose={onClose}><header><h2>{title}</h2><button className="icon-btn" aria-label="关闭详情" onClick={onClose}>×</button></header>{children}</DialogSurface>
 }
 export function SourceLocation({ source, url }: { source: SheetLocation; url?: string }) {
   const [error, setError] = useState('')
