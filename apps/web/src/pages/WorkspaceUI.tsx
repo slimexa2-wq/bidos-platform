@@ -5,6 +5,7 @@ import { openPortfolioSource, type SheetLocation } from '../services/portfolio'
 import { sourceDate, formatDiscountRate } from '../services/detailFields'
 import { StatusPill } from '../components/StatusPill'
 import { PageHeader } from '../components/PageHeader'
+import { useProjectDraft } from '../services/projectDraft'
 import './WorkspaceUI.css'
 export const blank = (value: unknown) => value == null || !String(value).trim() ? '/' : String(value)
 export const safeUrl = (value: string) => /^https?:\/\//i.test(value || '') ? value : undefined
@@ -31,39 +32,57 @@ export function Workbench({ title, subtitle, children, includeAssessment = false
   const [history, setHistory] = useState(false)
   const [limit, setLimit] = useState(40)
   const requested = ws.data?.projects.find(p => p.id === params.get('select'))
+  useEffect(() => { if (requested?.isHistorical) setHistory(true) }, [requested?.id,requested?.isHistorical])
   const rows = searchProjects(workProjects(ws.data?.projects || [], history, includeAssessment), query)
-  const selected = requested || rows[0]
-  return <section className="page ws-page"><PageHeader title={title} subtitle={subtitle} /><WorkspaceNotice {...ws} /><div className="ws-toolbar"><input type="search" aria-label="搜索工作项目" placeholder="搜索项目、甲方或负责人" value={query} onChange={e => { setQuery(e.target.value); setLimit(40) }} /><label><input type="checkbox" checked={history} onChange={e => setHistory(e.target.checked)} />包含历史项目</label><span className="ws-subtle">{rows.length}个项目</span><button className="btn ghost" disabled={ws.refreshing} onClick={() => void ws.refresh().catch(() => {})}>刷新</button></div>{!ws.loading && <div className="ws-split"><aside className="panel ws-projects">{rows.slice(0,limit).map(p => <button key={p.id} className={selected?.id === p.id ? 'active' : ''} onClick={() => setParams({ select: p.id })}><b>{p.name}</b><small>{[p.client,p.owner].filter(Boolean).join(' · ')}</small><small>{[p.partStatus,p.progress,nextWorkDate(p).value && `${nextWorkDate(p).label} ${nextWorkDate(p).value}`].filter(Boolean).join(' · ')}</small></button>)}{!rows.length && <div className="ws-empty">当前没有符合筛选的在办项目，可切换“包含历史项目”查看。</div>}{rows.length > limit && <button onClick={() => setLimit(n => n+40)}>继续显示 {Math.min(40,rows.length-limit)} 条</button>}</aside>{selected ? <div className="panel ws-work" key={selected.id}>{children(selected)}</div> : <div className="panel ws-empty">选择项目后开始处理。</div>}</div>}</section>
+  const hiddenHistoricalTarget = Boolean(requested?.isHistorical && !history)
+  const selected = hiddenHistoricalTarget ? undefined : rows.find(p => p.id === requested?.id) || rows[0]
+  return <section className="page ws-page"><PageHeader title={title} subtitle={subtitle} /><WorkspaceNotice {...ws} /><div className="ws-toolbar"><input type="search" aria-label="搜索工作项目" placeholder="搜索项目、甲方或负责人" value={query} onChange={e => { setQuery(e.target.value); setLimit(40) }} /><label><input type="checkbox" checked={history} onChange={e => setHistory(e.target.checked)} />包含历史项目</label><span className="ws-subtle">{rows.length}个项目</span>{requested?.isHistorical && history && <small className="ws-subtle">已按项目链接展开历史项目，可取消勾选收起。</small>}<button className="btn ghost" disabled={ws.refreshing} onClick={() => void ws.refresh().catch(() => {})}>刷新</button></div>{!ws.loading && <div className="ws-split"><aside className="panel ws-projects">{rows.slice(0,limit).map(p => <button key={p.id} className={selected?.id === p.id ? 'active' : ''} onClick={() => setParams({ select: p.id })}><b>{p.name}</b><small>{[p.client,p.owner].filter(Boolean).join(' · ')}</small><small>{[p.partStatus,p.progress,nextWorkDate(p).value && `${nextWorkDate(p).label} ${nextWorkDate(p).value}`].filter(Boolean).join(' · ')}</small></button>)}{!rows.length && <div className="ws-empty">当前没有符合筛选的在办项目，可切换“包含历史项目”查看。</div>}{rows.length > limit && <button onClick={() => setLimit(n => n+40)}>继续显示 {Math.min(40,rows.length-limit)} 条</button>}</aside>{selected ? <div className="panel ws-work" key={selected.id}>{children(selected)}</div> : <div className="panel ws-empty">{hiddenHistoricalTarget ? '当前链接指向历史项目；勾选“包含历史项目”或选择其他项目后处理。' : '选择项目后开始处理。'}</div>}</div>}</section>
+}
+export function DraftNotice({ dirty, discard }: { dirty: boolean; discard: () => void }) {
+  return dirty ? <div className="ws-note" role="status">有未保存修改 · 草稿按项目保留在当前浏览器会话，切换项目或页面后可继续编辑。<button className="btn ghost" onClick={() => { if (window.confirm('放弃此处未保存的草稿，恢复已保存内容？')) discard() }}>放弃草稿</button></div> : null
 }
 export function WorkRecord({ project: p, decision = false }: { project: WorkspaceProject; decision?: boolean }) {
-  const [baseline,setBaseline] = useState(p.work)
-  const [notes,setNotes] = useState(p.work?.notes || '')
-  const [next,setNext] = useState(p.work?.nextAction || '')
-  const [due,setDue] = useState(p.work?.dueAt || '')
-  const [choice,setChoice] = useState(p.work?.decision || '')
-  const [owner,setOwner] = useState(p.work?.owner || p.owner || '')
-  const [dirty,setDirty] = useState(false)
+  const fromProject = (work = p.work) => ({ baseline: work, notes: work?.notes || '', next: work?.nextAction || '', due: work?.dueAt || '', choice: work?.decision || '', owner: work?.owner || p.owner || '', dirty: false })
+  const draft = useProjectDraft(`${p.id}:work:${decision ? 'evaluation' : 'followup'}`, fromProject())
+  const { baseline, notes, next, due, choice, owner, dirty } = draft.value
   const [message,setMessage] = useState('')
   const [failed,setFailed] = useState(false)
   const [busy,setBusy] = useState(false)
-  useEffect(() => {
-    if(dirty) return
-    setBaseline(p.work); setNotes(p.work?.notes || ''); setNext(p.work?.nextAction || '')
-    setDue(p.work?.dueAt || ''); setChoice(p.work?.decision || ''); setOwner(p.work?.owner || p.owner || '')
-  }, [p.id,p.work,p.owner,dirty])
-  const save = async () => {
+  useEffect(() => { if (!dirty) draft.reset(fromProject()) }, [p.work,p.owner,dirty,draft.reset])
+  const change = (patch: Partial<typeof draft.value>) => draft.update({ ...patch, dirty: true })
+  const save = async (complete = false) => {
+    const revision = draft.getRevision()
     setBusy(true); setMessage(''); setFailed(false)
     try {
-      const changes: Partial<ProjectWork> = { notes,nextAction:next,dueAt:due,owner }
+      // Completion belongs only to this work follow-up. Keeping the completed
+      // text and time in notes uses the existing durable Excel work-log field.
+      const completionEntry = complete ? `【跟进完成 ${new Date().toLocaleString('zh-CN')}】\n事项：${next.trim()}${due ? `\n原跟进日期：${due}` : ''}` : ''
+      const completedNotes = complete ? [notes.trim(), completionEntry].filter(Boolean).join('\n\n') : notes
+      const changes: Partial<ProjectWork> = { notes: completedNotes, nextAction: complete ? '' : next, dueAt: complete ? '' : due, owner }
       if(decision) changes.decision=choice
       const saved=await saveProjectWork(p,changes,baseline)
-      setBaseline(saved); setDirty(false); setMessage(workSavedMessage(saved))
+      if (!draft.reset(fromProject(saved), revision)) {
+        // Keep newer edits, but let their next save build on this successful
+        // write. Completion still updates fields the user has not changed.
+        draft.update(previous => {
+          if (previous.baseline?.version !== baseline?.version || previous.baseline?.digest !== baseline?.digest) return previous
+          const submitted = { notes, next, due, choice, owner }
+          const savedDraft = fromProject(saved)
+          const merged = { ...previous, baseline: saved }
+          for (const field of ['notes', 'next', 'due', 'choice', 'owner'] as const) {
+            if (previous[field] === submitted[field]) merged[field] = savedDraft[field]
+            else if (field === 'notes' && complete) merged.notes = [previous.notes.trim(), completionEntry].filter(Boolean).join('\n\n')
+          }
+          return merged
+        })
+      }
+      setMessage(complete ? `本次跟进已完成，已移出工作跟进提醒；完成内容和时间已保存在工作备注。${workSavedMessage(saved)}` : `${next.trim() ? `已安排下次跟进${due ? ` · ${due}` : '（未设置日期）'}。` : ''}${workSavedMessage(saved)}`)
     } catch(e) { setFailed(true); setMessage(e instanceof Error ? e.message : '保存失败') }
     finally {setBusy(false)}
   }
-  return <><h3>{decision ? '人工评估记录' : '本次跟进'}</h3>{decision && <><label className="ws-formlabel" htmlFor="work-decision">评估意见</label><select id="work-decision" disabled={busy} value={choice} onChange={e => {setChoice(e.target.value);setDirty(true)}}><option value="">未记录</option><option>建议参与</option><option>建议不参与</option><option>待讨论</option></select><p className="ws-subtle">评估意见保存在工作记录中。{p.blindPath ? '实际参与状态请通过上方“查看参与状态”调整。' : '实际参与状态以源表为准。'}</p></>}<label className="ws-formlabel" htmlFor="work-owner">负责人</label><input id="work-owner" value={owner} disabled={busy} onChange={e=>{setOwner(e.target.value);setDirty(true)}} placeholder="负责人姓名"/><label className="ws-formlabel" htmlFor="next-action">下一步</label><input id="next-action" style={{width:'100%'}} disabled={busy} value={next} onChange={e=>{setNext(e.target.value);setDirty(true)}} placeholder="例如：向代理确认报名要求" /><label className="ws-formlabel" htmlFor="work-due">跟进日期</label><input id="work-due" type="date" disabled={busy} value={due} onChange={e=>{setDue(e.target.value);setDirty(true)}} /><label className="ws-formlabel" htmlFor="work-notes">工作备注</label><textarea id="work-notes" rows={4} disabled={busy} value={notes} onChange={e=>{setNotes(e.target.value);setDirty(true)}} placeholder="记录已核实的信息、处理进展或需要协助的事项" /><div className="ws-actions"><button className="btn primary" disabled={busy} onClick={() => void save()}>{busy?'保存中…':'保存工作记录'}</button>{dirty&&<small className="ws-subtle">有未保存修改</small>}{message && <span role="status" className={failed?'ws-error':'ws-subtle'}>{message}</span>}</div>{p.work?.updatedAt && <small className="ws-subtle">最近保存 {new Date(p.work.updatedAt).toLocaleString('zh-CN')} · {p.work.sync}</small>}</>
+  return <><h3>{decision ? '人工评估记录' : '本次跟进'}</h3><DraftNotice dirty={dirty} discard={() => draft.reset(fromProject())} />{decision && <><label className="ws-formlabel" htmlFor="work-decision">评估意见</label><select id="work-decision" disabled={busy} value={choice} onChange={e => change({ choice: e.target.value })}><option value="">未记录</option><option>建议参与</option><option>建议不参与</option><option>待讨论</option></select><p className="ws-subtle">评估意见保存在工作记录中。{p.blindPath ? '实际参与状态请通过上方“查看参与状态”调整。' : '实际参与状态以源表为准。'}</p></>}<label className="ws-formlabel" htmlFor="work-owner">负责人</label><input id="work-owner" value={owner} disabled={busy} onChange={e=>change({owner:e.target.value})} placeholder="负责人姓名"/><label className="ws-formlabel" htmlFor="next-action">下一步</label><input id="next-action" style={{width:'100%'}} disabled={busy} value={next} onChange={e=>change({next:e.target.value})} placeholder="例如：向代理确认报名要求" /><label className="ws-formlabel" htmlFor="work-due">跟进日期</label><input id="work-due" type="date" disabled={busy} value={due} onChange={e=>change({due:e.target.value})} /><label className="ws-formlabel" htmlFor="work-notes">工作备注</label><textarea id="work-notes" rows={5} disabled={busy} value={notes} onChange={e=>change({notes:e.target.value})} placeholder="记录已核实的信息、处理进展或需要协助的事项" /><p className="ws-subtle">保存记录会保留下一步提醒。完成本次跟进后，事项和时间保存在工作备注；如需继续跟进，填写下一步和日期后保存。保证金等业务提醒仍通过对应业务流程处理。</p><div className="ws-actions"><button className="btn primary" disabled={busy} onClick={() => void save()}>{busy?'保存中…':'保存工作记录'}</button>{!decision && <button className="btn ghost" disabled={busy || !next.trim()} onClick={() => void save(true)}>完成本次跟进</button>}{message && <span role="status" className={failed?'ws-error':'ws-subtle'}>{message}</span>}</div>{p.work?.updatedAt && <small className="ws-subtle">最近保存 {new Date(p.work.updatedAt).toLocaleString('zh-CN')} · {p.work.sync}</small>}</>
 }
-export function TaskRows({ tasks }: { tasks: WorkspaceTask[] }) { return <>{tasks.map(task=><Link className="ws-task" to={task.path || (task.projectId?`/registration?select=${encodeURIComponent(task.projectId)}`:'/alerts')} key={task.id}><span className={`dot ${task.severity}`} /><div><b>{task.title}</b>{task.detail && <small>{task.detail}</small>}</div>{task.at && <time>{task.at.slice(0,10)}</time>}<span>›</span></Link>)}{!tasks.length && <div className="ws-empty">当前没有需要处理的事项。</div>}</> }
+export function TaskRows({ tasks }: { tasks: WorkspaceTask[] }) { return <>{tasks.map(task=><Link className="ws-task" to={task.path || (task.projectId?`/registration?select=${encodeURIComponent(task.projectId)}`:'/alerts')} key={task.id}><span className={`dot ${task.severity}`} /><div><b>{task.title}</b>{task.detail && <small>{task.detail}</small>}</div>{task.at && <time>{task.at.slice(0,10)}</time>}<span className="ws-task-open">处理 ›</span></Link>)}{!tasks.length && <div className="ws-empty">当前没有需要处理的事项。</div>}</> }
 
 export function RelatedWorkHistory({ sourceKeys = [], projectId }: { sourceKeys?: SheetLocation[]; projectId?: string }) {
   const ws=useWorkspace()

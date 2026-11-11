@@ -1,6 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// This config reads only these Node environment variables; no runtime shim or
+// browser-wide Node types are needed by the frontend.
+declare const process: { env: { BIDOS_LAN_HOST?: string; BIDOS_WEB_PORT?: string } }
+
 // 局域网访问（2026-10-10）：
 //   host 用环境变量 BIDOS_LAN_HOST 控制，默认 0.0.0.0 = 允许同一局域网内其他电脑访问。
 //   改成 127.0.0.1 就退回「只允许本机」——改这一处即可开关，不需要改代码。

@@ -226,3 +226,5 @@ div[style*="justifyContent: flex-end"]{box-shadow:-6px 0 30px #15233b20}
 .detail-panel h3,.detail-panel h4{font-size:15px;font-weight:700;margin:0 0 14px}
 /* 详情 grid 统一为 detailgrid 间距 */
 .detail-panel .result-box{gap:19px}
+
+.mobile-more-menu{display:none}@media(max-width:900px){.mobile-nav .mobile-more{flex:0 0 auto;position:sticky;left:0;background:#fff;border:0;border-right:1px solid var(--line);color:var(--blue);padding:10px 16px;font:inherit;z-index:1}.mobile-more-menu{display:flex;position:fixed;bottom:76px;left:12px;right:12px;z-index:40;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px;gap:8px;flex-direction:column}.mobile-more-menu>a{padding:12px;color:var(--blue)}.mobile-more-menu>.btn{align-self:flex-end}.topbar input{min-width:0}}

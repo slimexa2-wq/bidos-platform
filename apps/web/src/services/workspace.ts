@@ -48,7 +48,7 @@ export async function saveProjectWork(project: WorkspaceProject, changes: Partia
   const baseVersion = base?.version || 0
   const baseDigest = base?.digest || ''
   const work = await workspaceRequest<ProjectWork>(`/api/workspace/projects/${encodeURIComponent(project.id)}/work`, { baseVersion, baseDigest, ...changes })
-  if (snapshot) snapshot = { ...snapshot, projects: snapshot.projects.map(p => p.id === project.id ? { ...p, work } : p) }
+  if (snapshot) snapshot = { ...snapshot, projects: snapshot.projects.map(p => p.id === project.id && work.version >= (p.work?.version || 0) ? { ...p, work } : p) }
   publish()
   void refreshWorkspace().catch(() => {})
   return work

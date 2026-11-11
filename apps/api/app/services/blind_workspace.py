@@ -312,35 +312,33 @@ class BlindWorkspace:
         with file_lock('/tmp/bidos_nas_sync.lock', blocking=False) as _lk:
             if not _lk.acquired:
                 return {'status': 'busy', 'message': '正在同步，稍后自动更新'}
-        try:
-            source = workbook_path('*盲投项目信息*汇总表*.xlsx')
-            if not source:
-                raise RuntimeError('桌面资料库未找到盲投汇总表')
-            if workbook_is_open(source):
-                return {'status': 'busy', 'message': '盲投 Excel 正本正在打开，关闭后自动继续同步'}
-            w = writer_module()
-            cfg = w.load_config(ROOT / 'scripts/writeback_columns.yaml')
-            with self.sessions() as session:
-                dsn = session.get_bind().url.render_as_string(hide_password=False)
-            jobs = w.collect_db_pending(cfg, dsn)
-            result = w.run_pass(source, cfg, jobs, dsn, None, False, False)
-            if result:
-                raise RuntimeError('Excel写入后未确认，请查看同步状态')
-            imported = self._read_master(source, w, cfg)
-            self._read_own_ledger()
-            self._apply_summary_results(w, cfg)
-            self._read_own_ledger()
-            expired = self.expire_candidates()
-            state = {'status': 'ok', 'lastSync': datetime.now(TZ).isoformat(), 'workbook': str(source),
-                     'rows': imported, 'expired': expired, 'intervalSeconds': 60}
-            write_state(state)
-            return state
-        except Exception as exc:
-            state = {**read_state(), 'status': 'error', 'message': str(exc), 'attemptedAt': datetime.now(TZ).isoformat()}
-            write_state(state)
-            raise
-        finally:
-            lock.close()
+            try:
+                source = workbook_path('*盲投项目信息*汇总表*.xlsx')
+                if not source:
+                    raise RuntimeError('桌面资料库未找到盲投汇总表')
+                if workbook_is_open(source):
+                    return {'status': 'busy', 'message': '盲投 Excel 正本正在打开，关闭后自动继续同步'}
+                w = writer_module()
+                cfg = w.load_config(ROOT / 'scripts/writeback_columns.yaml')
+                with self.sessions() as session:
+                    dsn = session.get_bind().url.render_as_string(hide_password=False)
+                jobs = w.collect_db_pending(cfg, dsn)
+                result = w.run_pass(source, cfg, jobs, dsn, None, False, False)
+                if result:
+                    raise RuntimeError('Excel写入后未确认，请查看同步状态')
+                imported = self._read_master(source, w, cfg)
+                self._read_own_ledger()
+                self._apply_summary_results(w, cfg)
+                self._read_own_ledger()
+                expired = self.expire_candidates()
+                state = {'status': 'ok', 'lastSync': datetime.now(TZ).isoformat(), 'workbook': str(source),
+                         'rows': imported, 'expired': expired, 'intervalSeconds': 60}
+                write_state(state)
+                return state
+            except Exception as exc:
+                state = {**read_state(), 'status': 'error', 'message': str(exc), 'attemptedAt': datetime.now(TZ).isoformat()}
+                write_state(state)
+                raise
 
     def _read_master(self, source, writer, cfg):
         import openpyxl

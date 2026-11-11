@@ -5,7 +5,7 @@ import { useWorkspace } from '../services/workspace'
 const nav=[['首页','/'],['盲投信息','/blind'],['报名管理','/registration'],['摘要评估','/evaluation'],['标书制作','/document'],['结果复盘','/results'],['保证金台账','/bid-bonds'],['竞对分析','/competitors']]
 
 export function AppShell(){
-  const navg=useNavigate(); const [q,setQ]=useState('')
+  const navg=useNavigate(); const [q,setQ]=useState(''); const [more,setMore]=useState(false)
   // 体检修复：角标此前硬编码为 4，与真实提醒数无关。改为读真实未解决数。
   const workspace = useWorkspace()
   const alertCount = workspace.data?.tasks.length || 0
@@ -26,6 +26,7 @@ export function AppShell(){
     </main>
     {/* §9.1：PC 与手机同一套能力。禁止 slice(0,5)——那会让结果复盘/保证金台账/竞对分析
         在手机上无任何入口（sidebar 在 ≤900px 被 display:none）。改为横向可滚动的完整导航。 */}
-    <nav className="mobile-nav">{nav.map(([label,to])=><NavLink key={to} to={to} end={to==='/'}>{label.replace('管理','').replace('信息','')}</NavLink>)}</nav>
+    <nav className="mobile-nav" aria-label="手机导航"><button className="mobile-more" aria-expanded={more} aria-controls="mobile-more-menu" onClick={()=>setMore(value=>!value)}>更多</button>{nav.map(([label,to])=><NavLink key={to} to={to} end={to==='/'}>{label.replace('管理','').replace('信息','')}</NavLink>)}</nav>
+    {more && <nav id="mobile-more-menu" className="mobile-more-menu" aria-label="更多功能"><button className="btn ghost" aria-label="关闭更多功能" onClick={()=>setMore(false)}>关闭 ×</button>{[['提醒','/alerts'],['全局搜索','/search'],['数据与自动化','/ops']].map(([label,to])=><NavLink key={to} to={to} onClick={()=>setMore(false)}>{label}</NavLink>)}</nav>}
   </div>
 }
